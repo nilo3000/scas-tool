@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import {
   Heart, TrendingUp, Users, Megaphone, Trophy,
   Lock, ArrowRight, Zap, Target, Lightbulb, Clock, Flame,
@@ -771,9 +770,8 @@ export default function Results() {
       <footer className="border-t border-border/50">
         <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-xs text-muted-foreground">
-            Powered by <a href="https://powerplayone.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Powerplay One</a>
+            A <strong>Sports Disruption Institute</strong> Assessment — powered by <a href="https://powerplayone.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Powerplay One</a>
           </span>
-          <PerplexityAttribution />
         </div>
       </footer>
     </div>

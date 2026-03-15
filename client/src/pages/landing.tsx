@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { Heart, TrendingUp, Users, Megaphone, Trophy, ArrowRight, Zap, Shield, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 
 const dimensions = [
   { icon: Heart, label: "Fan Attraction", desc: "How well you connect with and grow your supporter base", weight: "30%" },
@@ -176,9 +175,8 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ScasLogo />
-            <span>Powered by <a href="https://powerplayone.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Powerplay One</a></span>
+            <span>A <strong>Sports Disruption Institute</strong> Assessment — powered by <a href="https://powerplayone.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Powerplay One</a></span>
           </div>
-          <PerplexityAttribution />
         </div>
       </footer>
     </div>

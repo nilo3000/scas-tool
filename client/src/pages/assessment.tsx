@@ -34,8 +34,17 @@ function getMode(): "free" | "premium" {
 export default function Assessment() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    // Pre-fill clubName from Premium Gate's organization field if available
+    const orgName = sessionStorage.getItem("scas_org_name");
+    if (orgName) {
+      sessionStorage.removeItem("scas_org_name");
+      return { clubName: orgName };
+    }
+    return {};
+  });
   const [direction, setDirection] = useState<"right" | "left">("right");
+  const [showErrors, setShowErrors] = useState(false);
 
   const mode = useMemo(() => getMode(), []);
 
@@ -119,6 +128,17 @@ export default function Assessment() {
   });
 
   const handleNext = () => {
+    if (!canProceed) {
+      setShowErrors(true);
+      // Scroll to first unanswered question
+      const firstUnanswered = visibleQuestions.find(q => !answers[q.id] || answers[q.id].trim() === "");
+      if (firstUnanswered) {
+        const el = document.querySelector(`[data-question-id="${firstUnanswered.id}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+    setShowErrors(false);
     if (currentStep < totalSteps - 1) {
       setDirection("right");
       setCurrentStep(prev => prev + 1);
@@ -187,8 +207,10 @@ export default function Assessment() {
 
           {/* Questions */}
           <div className="space-y-6">
-            {visibleQuestions.map((question, qIdx) => (
-              <div key={question.id} className="space-y-2">
+            {visibleQuestions.map((question, qIdx) => {
+              const isUnanswered = showErrors && (!answers[question.id] || answers[question.id].trim() === "");
+              return (
+              <div key={question.id} data-question-id={question.id} className={`space-y-2 rounded-lg p-3 -mx-3 transition-colors ${isUnanswered ? "bg-red-50 dark:bg-red-950/20 ring-1 ring-red-300 dark:ring-red-800" : ""}`}>
                 <Label className="text-sm font-medium">
                   {currentStep > 0 && (
                     <span className="text-muted-foreground mr-1.5 text-xs font-normal">
@@ -272,8 +294,13 @@ export default function Assessment() {
                   </div>
                   );
                 })()}
+
+                {isUnanswered && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">Please answer this question to continue.</p>
+                )}
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </main>
@@ -294,7 +321,7 @@ export default function Assessment() {
 
           <Button
             onClick={handleNext}
-            disabled={!canProceed || submitMutation.isPending}
+            disabled={submitMutation.isPending}
             className="gap-2"
             data-testid="button-next"
           >

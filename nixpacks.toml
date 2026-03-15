@@ -1,5 +1,6 @@
-# Railway build configuration
-# This tells Railway how to build and run the SCAS app
+# Railway / Nixpacks configuration
+# Install ALL dependencies (including devDependencies) for the build step,
+# then start the production server from the compiled output.
 
 [phases.setup]
 nixPkgs = ["nodejs_22", "npm-10_x"]

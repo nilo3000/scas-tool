@@ -20,6 +20,7 @@ export default function PremiumGate() {
   const [email, setEmail] = useState("");
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -32,6 +33,10 @@ export default function PremiumGate() {
       });
     },
     onSuccess: () => {
+      // Pass organization name so assessment can pre-fill clubName
+      if (organization.trim()) {
+        sessionStorage.setItem("scas_org_name", organization.trim());
+      }
       setLocation("/assess?mode=premium");
     },
   });
@@ -193,8 +198,12 @@ export default function PremiumGate() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Full name"
+                  className={showErrors && !name.trim() ? "border-red-400 ring-1 ring-red-300" : ""}
                   data-testid="input-premium-name"
                 />
+                {showErrors && !name.trim() && (
+                  <p className="text-xs text-red-600">Please enter your name.</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -204,8 +213,12 @@ export default function PremiumGate() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@club.com"
+                  className={showErrors && !email.trim() ? "border-red-400 ring-1 ring-red-300" : ""}
                   data-testid="input-premium-email"
                 />
+                {showErrors && !email.trim() && (
+                  <p className="text-xs text-red-600">Please enter your email address.</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -214,8 +227,12 @@ export default function PremiumGate() {
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value)}
                   placeholder="Club or organization name"
+                  className={showErrors && !organization.trim() ? "border-red-400 ring-1 ring-red-300" : ""}
                   data-testid="input-premium-organization"
                 />
+                {showErrors && !organization.trim() && (
+                  <p className="text-xs text-red-600">Please enter your organization name.</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -224,8 +241,12 @@ export default function PremiumGate() {
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   placeholder="e.g., CEO, Commercial Director"
+                  className={showErrors && !role.trim() ? "border-red-400 ring-1 ring-red-300" : ""}
                   data-testid="input-premium-role"
                 />
+                {showErrors && !role.trim() && (
+                  <p className="text-xs text-red-600">Please enter your role.</p>
+                )}
               </div>
 
               {/* Payment note */}
@@ -239,8 +260,15 @@ export default function PremiumGate() {
               </Card>
 
               <Button
-                onClick={() => submitMutation.mutate()}
-                disabled={!canSubmit || submitMutation.isPending}
+                onClick={() => {
+                  if (!canSubmit) {
+                    setShowErrors(true);
+                    return;
+                  }
+                  setShowErrors(false);
+                  submitMutation.mutate();
+                }}
+                disabled={submitMutation.isPending}
                 className="w-full gap-2 mt-2"
                 size="lg"
                 data-testid="button-proceed-premium"

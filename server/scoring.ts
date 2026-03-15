@@ -1,4 +1,4 @@
-import type { ScasScores, DimensionScore, Initiative, ScoreDriverEntry, DimensionDrivers } from "@shared/schema";
+import type { ScasScores, DimensionScore, Initiative, ScoreDriverEntry, DimensionDrivers, PotentialDriverEntry, DimensionPotentialDrivers } from "@shared/schema";
 
 // ─── ANSWER SCORES ──────────────────────────────────────────────────────────
 // Each answer option maps to a 1.0–5.0 score.
@@ -820,6 +820,159 @@ function computeScoreDrivers(
   return result;
 }
 
+// ─── POTENTIAL DRIVER COMPUTATION ──────────────────────────────────────────
+interface PotentialDriverContext {
+  dimKey: string;
+  dimLabel: string;
+  achieved: number;
+  potential: number;
+  uplift: number;
+  conversionRate: number;
+  tier: number;
+  tierLabel: string;
+  hasCapabilityBoost: boolean;
+  catchmentSensitive: boolean;
+  catchmentMultiplier: number;
+  catchmentPopulation: string;
+}
+
+const TIER_CEILINGS: Record<number, { maxUplift: number; ceiling: number }> = {
+  1: { maxUplift: 1.2, ceiling: 3.5 },
+  2: { maxUplift: 1.0, ceiling: 4.0 },
+  3: { maxUplift: 0.8, ceiling: 4.3 },
+  4: { maxUplift: 0.6, ceiling: 4.6 },
+  5: { maxUplift: 0.4, ceiling: 4.8 },
+};
+
+const DIM_LABELS: Record<string, string> = {
+  fan: "Fan Attraction",
+  commercial: "Commercial Attraction",
+  talent: "Talent Attraction",
+  media: "Media & Cultural Attraction",
+  competitive: "Competitive Attraction",
+};
+
+function computePotentialDrivers(contexts: PotentialDriverContext[]): Record<string, DimensionPotentialDrivers> {
+  const result: Record<string, DimensionPotentialDrivers> = {};
+
+  for (const ctx of contexts) {
+    const entries: PotentialDriverEntry[] = [];
+    const config = TIER_CEILINGS[ctx.tier] || TIER_CEILINGS[3];
+
+    // ── Row 1: Tier ceiling (static info, no signal) ──
+    entries.push({
+      factor: "tier",
+      label: "Club tier",
+      signal: "info",
+      text: `As a ${ctx.tierLabel} club, your attraction ceiling across all dimensions is calibrated to ${config.ceiling.toFixed(1)}, reflecting what is realistically achievable for clubs of your size and revenue class.`,
+    });
+
+    // ── Row 2: Growth headroom (based on uplift remaining) ──
+    const upliftRemaining = ctx.uplift;
+    let headroomSignal: PotentialDriverEntry["signal"];
+    let headroomText: string;
+    if (upliftRemaining > 0.6) {
+      headroomSignal = "boosting";
+      headroomText = `You have ${upliftRemaining.toFixed(1)} points of growth headroom in this dimension before reaching your tier ceiling.`;
+    } else if (upliftRemaining >= 0.3) {
+      headroomSignal = "neutral";
+      headroomText = `You have ${upliftRemaining.toFixed(1)} points of headroom remaining in this dimension — moderate room for further growth within your tier ceiling.`;
+    } else {
+      headroomSignal = "dragging";
+      headroomText = `You have already converted ${ctx.conversionRate}% of your addressable potential in this dimension, leaving limited structural headroom — the focus here shifts from raising the ceiling to sustaining the high floor.`;
+    }
+    entries.push({
+      factor: "headroom",
+      label: "Growth headroom",
+      signal: headroomSignal,
+      text: headroomText,
+    });
+
+    // ── Row 3: Catchment area multiplier ──
+    if (!ctx.catchmentSensitive) {
+      entries.push({
+        factor: "catchment",
+        label: "Catchment area",
+        signal: "na",
+        text: `${ctx.dimLabel} is not adjusted for catchment area — the ceiling is determined solely by tier and capability readiness.`,
+      });
+    } else {
+      let catchSignal: PotentialDriverEntry["signal"];
+      let catchText: string;
+      if (ctx.catchmentMultiplier >= 1.05) {
+        catchSignal = "boosting";
+        catchText = `Your ${ctx.catchmentPopulation} catchment area is your strongest structural advantage — a large local population base lifts your ceiling above the tier default, giving you more room to grow than most clubs at your level.`;
+      } else if (ctx.catchmentMultiplier >= 0.95) {
+        catchSignal = "neutral";
+        catchText = `Your catchment area is close to the tier baseline and has a neutral effect on your potential ceiling.`;
+      } else {
+        catchSignal = "dragging";
+        catchText = `Your ${ctx.catchmentPopulation} catchment area constrains your potential ceiling in fan-sensitive dimensions — this reflects the structural reality of competing for supporters in a smaller market, not a failure of execution.`;
+      }
+      entries.push({
+        factor: "catchment",
+        label: "Catchment area",
+        signal: catchSignal,
+        text: catchText,
+      });
+    }
+
+    // ── Row 4: Capability Readiness Bonus ──
+    // Check if potential == ceiling (CRF absorbed by cap)
+    const effectiveCeiling = ctx.catchmentSensitive
+      ? config.ceiling * ctx.catchmentMultiplier
+      : config.ceiling;
+    const atCeiling = ctx.potential >= (Math.round(effectiveCeiling * 10) / 10) - 0.05;
+
+    if (atCeiling && ctx.hasCapabilityBoost) {
+      // CRF triggered but absorbed by ceiling cap
+      entries.push({
+        factor: "capability",
+        label: "Capability bonus",
+        signal: "na",
+        text: `Your strong performance has triggered the Capability Readiness Bonus, but your potential has already reached the tier ceiling — the bonus is fully absorbed.`,
+      });
+    } else if (ctx.hasCapabilityBoost) {
+      entries.push({
+        factor: "capability",
+        label: "Capability bonus",
+        signal: "boosting",
+        text: `Your ${ctx.dimLabel} score of ${ctx.achieved.toFixed(1)} has unlocked the Capability Readiness Bonus (+0.2), meaning your demonstrated capability has expanded your addressable ceiling beyond the tier default.`,
+      });
+    } else {
+      entries.push({
+        factor: "capability",
+        label: "Capability bonus",
+        signal: "neutral",
+        text: `Your ${ctx.dimLabel} score is currently below the threshold for the Capability Readiness Bonus — reaching it would unlock a +0.2 bonus and expand your potential ceiling in this dimension.`,
+      });
+    }
+
+    // ── Summary sentence ──
+    const boostingFactors = entries.filter(e => e.signal === "boosting");
+    const draggingFactors = entries.filter(e => e.signal === "dragging");
+
+    let summary: string;
+    if (draggingFactors.length > 0 && boostingFactors.length > 0) {
+      const constraintLabels = draggingFactors.map(e => e.label.toLowerCase()).join(" and ");
+      const boostLabels = boostingFactors.map(e => e.label.toLowerCase()).join(" and ");
+      summary = `Your potential is supported by ${boostLabels}, but constrained by ${constraintLabels}.`;
+    } else if (draggingFactors.length > 0) {
+      const constraintLabels = draggingFactors.map(e => e.label.toLowerCase()).join(" and ");
+      summary = `Your potential is primarily constrained by ${constraintLabels}; improving your achieved score further would not raise the ceiling unless you unlock the capability bonus.`;
+    } else if (boostingFactors.length > 0) {
+      const boostLabels = boostingFactors.map(e => e.label.toLowerCase()).join(" and ");
+      summary = `Your potential ceiling is actively boosted by ${boostLabels}, giving you room to grow beyond the tier default.`;
+    } else {
+      summary = `Your potential ceiling is at the baseline for your tier and catchment — all factors are in neutral range.`;
+    }
+
+    result[ctx.dimKey] = { entries, summary };
+  }
+
+  return result;
+}
+
 export function calculateScores(answers: Record<string, string>, revenue: string): ScasScores {
   const { tier, label: tierLabel } = getTier(revenue);
 
@@ -924,5 +1077,12 @@ export function calculateScores(answers: Record<string, string>, revenue: string
     biggestOpportunity: dimLabels[biggest[0]],
     initiatives: getInitiatives(dimensions, tier),
     scoreDrivers: computeScoreDrivers(answers, tier),
+    potentialDrivers: computePotentialDrivers([
+      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+    ]),
   };
 }

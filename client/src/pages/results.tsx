@@ -13,13 +13,14 @@ import {
   Heart, TrendingUp, Users, Megaphone, Trophy,
   Lock, ArrowRight, Zap, Target, Lightbulb, Clock, Flame,
   RotateCcw, MapPin, Globe, Shield, Check, Gift, Copy, CheckCheck,
-  ChevronDown, ChevronUp, ArrowUpCircle, MinusCircle, ArrowDownCircle
+  ChevronDown, ChevronUp, ArrowUpCircle, MinusCircle, ArrowDownCircle,
+  Info, Ban
 } from "lucide-react";
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer
 } from "recharts";
-import type { ScasScores, DimensionScore, Initiative, ScoreDriverEntry, DimensionDrivers } from "@shared/schema";
+import type { ScasScores, DimensionScore, Initiative, ScoreDriverEntry, DimensionDrivers, PotentialDriverEntry, DimensionPotentialDrivers } from "@shared/schema";
 import { Link } from "wouter";
 
 const ICONS: Record<string, typeof Heart> = { Heart, TrendingUp, Users, Megaphone, Trophy };
@@ -55,7 +56,7 @@ function ScoreRing({ score, maxScore = 5, size = 120, label }: { score: number; 
   );
 }
 
-function DimensionBar({ dim, dimKey, unlocked, hideConversion, drivers }: { dim: DimensionScore; dimKey: string; unlocked: boolean; hideConversion?: boolean; drivers?: DimensionDrivers }) {
+function DimensionBar({ dim, dimKey, unlocked, hideConversion, drivers, potentialDrivers }: { dim: DimensionScore; dimKey: string; unlocked: boolean; hideConversion?: boolean; drivers?: DimensionDrivers; potentialDrivers?: DimensionPotentialDrivers }) {
   const meta = DIMENSION_META[dimKey];
   const Icon = ICONS[meta.icon] || Heart;
   const achievedPct = (dim.achieved / 5) * 100;
@@ -134,6 +135,23 @@ function DimensionBar({ dim, dimKey, unlocked, hideConversion, drivers }: { dim:
       {/* Score Drivers (premium unlocked only) */}
       {unlocked && drivers && (
         <ScoreDriversPanel drivers={drivers} dimKey={dimKey} />
+      )}
+
+      {/* Potential Drivers (premium unlocked only) */}
+      {unlocked && potentialDrivers && (
+        <PotentialDriversPanel drivers={potentialDrivers} dimKey={dimKey} />
+      )}
+
+      {/* Free mode: blurred potential drivers teaser */}
+      {!unlocked && hideConversion && (
+        <div className="mt-3 relative">
+          <div className="blur-[2px] pointer-events-none select-none opacity-40">
+            <div className="flex items-center gap-2 text-xs font-medium text-primary/80 w-full">
+              <ChevronDown className="w-3.5 h-3.5" />
+              Potential Drivers
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -305,6 +323,108 @@ function ScoreDriversPanel({ drivers, dimKey }: { drivers: DimensionDrivers; dim
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                       {entry.implication}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Potential Drivers Panel ─────────────────────────────────────────────────
+const POTENTIAL_SIGNAL_CONFIG = {
+  boosting: {
+    icon: ArrowUpCircle,
+    label: "Boosting",
+    prefix: "\u25B2",
+    textColor: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+  },
+  neutral: {
+    icon: MinusCircle,
+    label: "Neutral",
+    prefix: "\u2014",
+    textColor: "text-slate-500",
+    bgColor: "bg-slate-50",
+    borderColor: "border-slate-200",
+  },
+  dragging: {
+    icon: ArrowDownCircle,
+    label: "Constraining",
+    prefix: "\u25BC",
+    textColor: "text-red-600",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+  },
+  info: {
+    icon: Info,
+    label: "Context",
+    prefix: "\u2139",
+    textColor: "text-blue-600",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+  },
+  na: {
+    icon: Ban,
+    label: "N/A",
+    prefix: "\u2014",
+    textColor: "text-slate-400",
+    bgColor: "bg-slate-50/50",
+    borderColor: "border-slate-100",
+  },
+};
+
+function PotentialDriversPanel({ drivers, dimKey }: { drivers: DimensionPotentialDrivers; dimKey: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const meta = DIMENSION_META[dimKey];
+
+  if (!drivers || drivers.entries.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-xs font-medium text-primary/80 hover:text-primary transition-colors w-full"
+        data-testid={`button-potential-drivers-${dimKey}`}
+      >
+        {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        Potential Drivers
+      </button>
+
+      {isOpen && (
+        <div className="mt-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+          {/* Summary */}
+          <p className="text-xs text-muted-foreground leading-relaxed px-1">
+            {drivers.summary}
+          </p>
+
+          {/* Per-factor entries */}
+          <div className="space-y-1.5">
+            {drivers.entries.map((entry) => {
+              const cfg = POTENTIAL_SIGNAL_CONFIG[entry.signal];
+              const SignalIcon = cfg.icon;
+              return (
+                <div
+                  key={entry.factor}
+                  className={`flex items-start gap-2.5 px-3 py-2 rounded-md border ${cfg.bgColor} ${cfg.borderColor} ${entry.signal === "na" ? "opacity-60" : ""}`}
+                >
+                  <SignalIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${cfg.textColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-foreground">
+                        {entry.label}
+                      </span>
+                      <span className={`text-xs font-medium whitespace-nowrap ${cfg.textColor}`}>
+                        {cfg.prefix} {cfg.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {entry.text}
                     </p>
                   </div>
                 </div>
@@ -652,6 +772,7 @@ export default function Results() {
                 unlocked={isUnlocked}
                 hideConversion={isFreeMode}
                 drivers={scores.scoreDrivers?.[key]}
+                potentialDrivers={scores.potentialDrivers?.[key]}
               />
             ))}
           </div>

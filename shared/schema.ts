@@ -106,6 +106,7 @@ export interface ScasScores {
   biggestOpportunity: string;
   initiatives: Initiative[];
   scoreDrivers?: Record<string, DimensionDrivers>;
+  potentialDrivers?: Record<string, DimensionPotentialDrivers>;
 }
 
 export interface Initiative {
@@ -128,5 +129,18 @@ export interface ScoreDriverEntry {
 
 export interface DimensionDrivers {
   entries: ScoreDriverEntry[];
+  summary: string;
+}
+
+// ─── Potential Drivers (ceiling transparency) ──────────────────────────────
+export interface PotentialDriverEntry {
+  factor: "tier" | "headroom" | "catchment" | "capability";
+  label: string;
+  signal: "boosting" | "neutral" | "dragging" | "info" | "na";
+  text: string;
+}
+
+export interface DimensionPotentialDrivers {
+  entries: PotentialDriverEntry[];
   summary: string;
 }

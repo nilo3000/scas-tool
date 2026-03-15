@@ -49,7 +49,7 @@ export const TIER_PRICING: Record<number, { price: number; tierLabel: string; re
   2: { price: 49, tierLabel: "Foundation", revenueRange: "$3M – $10M", questions: "~36" },
   3: { price: 99, tierLabel: "Challenger", revenueRange: "$10M – $50M", questions: "~56" },
   4: { price: 159, tierLabel: "Contender", revenueRange: "$50M – $300M", questions: "~69" },
-  5: { price: 490, tierLabel: "Elite", revenueRange: "Over $300M", questions: "~69" },
+  5: { price: 490, tierLabel: "Elite", revenueRange: "Over $300M", questions: "~77" },
 };
 
 /** Derive numeric tier from the annualRevenue answer value */

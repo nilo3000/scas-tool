@@ -30,6 +30,19 @@ export async function registerRoutes(
         ? `SCAS-${Array.from({ length: 8 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(Math.floor(Math.random() * 36))).join('')}`
         : null;
 
+      // For premium assessments, auto-attach lead data from the premium gate
+      let leadEmail: string | null = null;
+      let leadName: string | null = null;
+      let leadRole: string | null = null;
+      if (mode === "premium") {
+        const lead = await storage.getLatestPremiumLead();
+        if (lead) {
+          leadEmail = lead.email;
+          leadName = lead.name;
+          leadRole = lead.role;
+        }
+      }
+
       const assessment = await storage.createAssessment({
         clubName,
         sport,
@@ -39,9 +52,9 @@ export async function registerRoutes(
         annualRevenue,
         answers: JSON.stringify(answers),
         scores: JSON.stringify(scores),
-        email: null,
-        contactName: null,
-        orgRole: null,
+        email: leadEmail,
+        contactName: leadName,
+        orgRole: leadRole,
         mode: mode || "free",
         voucherCode,
         completedAt: new Date().toISOString(),
@@ -73,6 +86,9 @@ export async function registerRoutes(
         mode: assessment.mode || "free",
         voucherCode: assessment.voucherCode || null,
         tierPrice: TIER_PRICES[assessment.tier] || 49,
+        leadEmail: assessment.email || null,
+        leadName: assessment.contactName || null,
+        leadRole: assessment.orgRole || null,
       });
     } catch (err: any) {
       console.error("Error fetching assessment:", err);

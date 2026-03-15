@@ -7,6 +7,7 @@ export interface IStorage {
   updateAssessmentLead(id: string, email: string, contactName: string, orgRole: string): Promise<Assessment | undefined>;
   getAllAssessments(): Promise<Assessment[]>;
   createPremiumLead(lead: { name: string; email: string; organization: string; role: string; selectedTier?: number }): Promise<PremiumLead>;
+  getLatestPremiumLead(): Promise<PremiumLead | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -57,6 +58,10 @@ export class MemStorage implements IStorage {
 
   async getAllAssessments(): Promise<Assessment[]> {
     return Array.from(this.assessments.values());
+  }
+
+  async getLatestPremiumLead(): Promise<PremiumLead | undefined> {
+    return this.premiumLeads.length > 0 ? this.premiumLeads[this.premiumLeads.length - 1] : undefined;
   }
 
   async createPremiumLead(lead: { name: string; email: string; organization: string; role: string; selectedTier?: number }): Promise<PremiumLead> {

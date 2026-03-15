@@ -86,7 +86,7 @@ export default function Landing() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                25–69 tier-specific questions with full breakdown, conversion rates, and recommendations.
+                25–77 tier-specific questions with full breakdown, conversion rates, and recommendations.
               </p>
               <ul className="space-y-1.5 mb-6 flex-1">
                 {[
@@ -155,7 +155,7 @@ export default function Landing() {
           <h2 className="font-display font-semibold text-lg mb-6">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: "01", title: "Choose your path", desc: "Quick 12-question free score or comprehensive premium assessment with 25–69 questions." },
+              { step: "01", title: "Choose your path", desc: "Quick 12-question free score or comprehensive premium assessment with 25–77 questions." },
               { step: "02", title: "Get your SCAS score", desc: "Achieved score, potential ceiling, and conversion rate across all dimensions." },
               { step: "03", title: "Unlock recommendations", desc: "Specific initiative archetypes to close your biggest attraction gaps." },
             ].map((item) => (

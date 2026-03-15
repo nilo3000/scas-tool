@@ -114,6 +114,7 @@ export interface Initiative {
   impactRange: string;
   timeline: string;
   effort: string;
+  reason: string;
 }
 
 export interface ScoreDriverEntry {

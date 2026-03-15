@@ -206,10 +206,20 @@ function VoucherSection({ voucherCode, tier }: { voucherCode: string; tier: numb
           {copied ? "Copied" : "Copy"}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        This voucher is worth €{tierData?.price ?? 49}, redeemable on any Powerplay One workshop, consulting engagement, or SIRA/SIFA platform subscription.
-        Contact <a href="https://powerplayone.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">powerplayone.com</a> to apply your voucher.
-      </p>
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">How to redeem</p>
+        <ol className="text-xs text-muted-foreground leading-relaxed space-y-1 list-decimal list-inside">
+          <li>Visit <a href="https://powerplayone.com/redeem" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-primary">powerplayone.com/redeem</a></li>
+          <li>Enter your voucher code</li>
+          <li>Applied as discount at checkout</li>
+        </ol>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Redeemable on any Powerplay One workshop, consulting engagement, or SIRA/SIFA platform subscription.
+        </p>
+        <p className="text-xs text-muted-foreground/70 leading-relaxed mt-2">
+          Valid for 12 months from assessment completion. Single use, non-transferable, not redeemable for cash. Valid on all Powerplay One services with a value equal to or greater than the voucher amount.
+        </p>
+      </div>
     </Card>
   );
 }
@@ -317,6 +327,11 @@ function InitiativeCard({ initiative }: { initiative: Initiative }) {
       <div className="min-w-0 flex-1">
         <span className="font-display font-semibold text-sm block">{initiative.name}</span>
         <span className="text-xs text-muted-foreground block mt-0.5">{initiative.dimension}</span>
+        {initiative.reason && (
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed bg-muted/30 rounded px-2 py-1.5">
+            <span className="font-medium text-foreground">Why recommended:</span> {initiative.reason}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-3 mt-2">
           <span className="text-xs flex items-center gap-1 text-primary">
             <Target className="w-3 h-3" /> {initiative.impactRange}
@@ -333,10 +348,11 @@ function InitiativeCard({ initiative }: { initiative: Initiative }) {
   );
 }
 
-function UnlockForm({ assessmentId, onUnlocked }: { assessmentId: string; onUnlocked: () => void }) {
-  const [email, setEmail] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [orgRole, setOrgRole] = useState("");
+function UnlockForm({ assessmentId, onUnlocked, leadEmail, leadName, leadRole }: { assessmentId: string; onUnlocked: () => void; leadEmail?: string | null; leadName?: string | null; leadRole?: string | null }) {
+  const hasPrefilledData = !!(leadEmail && leadName);
+  const [email, setEmail] = useState(leadEmail || "");
+  const [contactName, setContactName] = useState(leadName || "");
+  const [orgRole, setOrgRole] = useState(leadRole || "");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -350,6 +366,38 @@ function UnlockForm({ assessmentId, onUnlocked }: { assessmentId: string; onUnlo
     },
   });
 
+  // One-click pre-filled confirmation for premium users
+  if (hasPrefilledData) {
+    return (
+      <Card className="p-6 border-primary/20 bg-primary/3">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display font-bold text-base">Unlock Your Full Report</h3>
+            <p className="text-xs text-muted-foreground">Confirm to access conversion rates, score drivers, and tailored recommendations</p>
+          </div>
+        </div>
+        <div className="rounded-md bg-muted/50 p-3 mb-4 space-y-1">
+          <p className="text-sm"><span className="text-muted-foreground">Name:</span> <span className="font-medium">{leadName}</span></p>
+          <p className="text-sm"><span className="text-muted-foreground">Email:</span> <span className="font-medium">{leadEmail}</span></p>
+          {leadRole && <p className="text-sm"><span className="text-muted-foreground">Role:</span> <span className="font-medium">{leadRole}</span></p>}
+        </div>
+        <Button
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+          className="w-full gap-2"
+          data-testid="button-unlock"
+        >
+          {mutation.isPending ? "Unlocking..." : "Confirm & Unlock Full Report"}
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </Card>
+    );
+  }
+
+  // Fallback form for free-to-premium upgrade (no pre-filled data)
   return (
     <Card className="p-6 border-primary/20 bg-primary/3">
       <div className="flex items-center gap-3 mb-4">
@@ -418,6 +466,9 @@ export default function Results() {
     unlocked: boolean;
     mode: string;
     voucherCode: string | null;
+    leadEmail: string | null;
+    leadName: string | null;
+    leadRole: string | null;
   }>({
     queryKey: ["/api/assessments", id],
     enabled: !!id,
@@ -619,7 +670,13 @@ export default function Results() {
           <>
             {!isUnlocked ? (
               <section>
-                <UnlockForm assessmentId={id} onUnlocked={() => setUnlocked(true)} />
+                <UnlockForm
+                  assessmentId={id}
+                  onUnlocked={() => setUnlocked(true)}
+                  leadEmail={data.leadEmail}
+                  leadName={data.leadName}
+                  leadRole={data.leadRole}
+                />
               </section>
             ) : (
               <>

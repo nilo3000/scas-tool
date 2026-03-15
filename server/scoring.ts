@@ -529,6 +529,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.3 to +0.6",
         timeline: "6-12 months",
         effort: "Medium",
+        reason: `Your fan dimension has ${gap.dim.uplift.toFixed(1)} points of untapped potential. A structured engagement platform can systematically close this gap by improving communication frequency, database coverage, and fan segmentation.`,
       });
       allInitiatives.push({
         name: "Community & Grassroots Program",
@@ -536,6 +537,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.1 to +0.3",
         timeline: "3-12 months",
         effort: "Low-Medium",
+        reason: `Community events and grassroots programmes build organic fan loyalty and grow your active member base — two areas where your current scores indicate room for improvement.`,
       });
       // Social Media Professionalization archetype
       if (gap.dim.achieved < 3.0) {
@@ -545,6 +547,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
           impactRange: "+0.2 to +0.5",
           timeline: "3-6 months",
           effort: "Medium",
+          reason: `Your fan achieved score (${gap.dim.achieved.toFixed(1)}) suggests social media presence and follower growth have significant room for improvement, which directly affects fan reach and engagement.`,
         });
       }
     }
@@ -555,6 +558,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.4 to +0.8",
         timeline: "6-18 months",
         effort: "High",
+        reason: `Your commercial dimension shows ${gap.dim.uplift.toFixed(1)} points of uplift potential. Restructuring your sponsorship portfolio, pricing strategy, and revenue diversification can unlock significant value.`,
       });
       allInitiatives.push({
         name: "Sponsorship Activation Upgrade",
@@ -562,6 +566,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.2 to +0.4",
         timeline: "3-6 months",
         effort: "Medium",
+        reason: `Moving beyond passive logo placement to strategic co-creation and multi-channel activation improves sponsor satisfaction, retention, and deal values.`,
       });
     }
     if (gap.key === "talent" && gap.dim.uplift > 0.4) {
@@ -571,6 +576,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.3 to +0.6",
         timeline: "12-24 months",
         effort: "High",
+        reason: `Your talent dimension has ${gap.dim.uplift.toFixed(1)} points of uplift. Formalising academy pathways, coaching certification, and player development tracking directly improves talent attraction and retention.`,
       });
     }
     if (gap.key === "media" && gap.dim.uplift > 0.5) {
@@ -580,6 +586,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.3 to +0.6",
         timeline: "3-9 months",
         effort: "Medium",
+        reason: `Your media dimension has ${gap.dim.uplift.toFixed(1)} points of untapped potential. Professionalising content output and cadence across platforms is the fastest lever to improve media visibility and cultural relevance.`,
       });
       allInitiatives.push({
         name: "Brand & Identity Refresh",
@@ -587,6 +594,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.2 to +0.5",
         timeline: "6-12 months",
         effort: "Medium-High",
+        reason: `A cohesive brand architecture and identity system strengthens media perception, making every piece of content and partnership more impactful.`,
       });
     }
     if (gap.key === "competitive" && gap.dim.uplift > 0.3) {
@@ -596,6 +604,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
         impactRange: "+0.2 to +0.4",
         timeline: "6-12 months",
         effort: "Medium",
+        reason: `Your competitive dimension has ${gap.dim.uplift.toFixed(1)} points of uplift. Investing in performance analytics and data-driven decision-making improves on-field competitiveness relative to resources.`,
       });
     }
   }
@@ -609,6 +618,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
       impactRange: "+0.2 to +0.5",
       timeline: "6-18 months",
       effort: "High",
+      reason: `Your overall fan score (${dimensions.fan.achieved.toFixed(1)}) indicates the matchday experience and venue engagement have room for improvement, which directly affects attendance, season ticket renewal, and per-fan revenue.`,
     });
   }
 
@@ -620,6 +630,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
       impactRange: "+0.3 to +0.6",
       timeline: "12-24 months",
       effort: "High",
+      reason: `Both your fan (${dimensions.fan.achieved.toFixed(1)}) and commercial (${dimensions.commercial.achieved.toFixed(1)}) scores are below 3.0, suggesting fragmented data capabilities are limiting fan segmentation, sponsor analytics, and revenue optimisation across multiple dimensions.`,
     });
   }
 
@@ -631,6 +642,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
       impactRange: "+0.2 to +0.5",
       timeline: "12-36 months",
       effort: "Very High",
+      reason: `As a T${tier}+ club with solid fan (${dimensions.fan.achieved.toFixed(1)}) and commercial (${dimensions.commercial.achieved.toFixed(1)}) foundations, you're positioned to capture international revenue and fanbase growth that could significantly expand your addressable potential.`,
     });
   }
 

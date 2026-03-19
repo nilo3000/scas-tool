@@ -45,11 +45,11 @@ export const REVENUE_RANGES = [
 ];
 
 export const TIER_PRICING: Record<number, { price: number; tierLabel: string; revenueRange: string; questions: string }> = {
-  1: { price: 19, tierLabel: "Grassroots", revenueRange: "Under $3M", questions: "~25" },
-  2: { price: 49, tierLabel: "Foundation", revenueRange: "$3M – $10M", questions: "~36" },
-  3: { price: 99, tierLabel: "Challenger", revenueRange: "$10M – $50M", questions: "~56" },
-  4: { price: 159, tierLabel: "Contender", revenueRange: "$50M – $300M", questions: "~69" },
-  5: { price: 490, tierLabel: "Elite", revenueRange: "Over $300M", questions: "~77" },
+  1: { price: 19, tierLabel: "Grassroots", revenueRange: "Under $3M", questions: "~28" },
+  2: { price: 49, tierLabel: "Foundation", revenueRange: "$3M – $10M", questions: "~39" },
+  3: { price: 99, tierLabel: "Challenger", revenueRange: "$10M – $50M", questions: "~59" },
+  4: { price: 159, tierLabel: "Contender", revenueRange: "$50M – $300M", questions: "~72" },
+  5: { price: 490, tierLabel: "Elite", revenueRange: "Over $300M", questions: "~80" },
 };
 
 /** Derive numeric tier from the annualRevenue answer value */
@@ -113,6 +113,45 @@ export const STEPS: Step[] = [
           { value: "1M+", label: "Over 1M", description: "Major metro", tooltip: "Large metropolitan or national capital catchment. E.g. a top-flight club in a major city where multiple professional clubs compete for the same audience." },
         ],
       },
+      // ─── v2.4: Virtual Catchment Area questions ─────────────────────────
+      {
+        id: "digitalReachRatio",
+        label: "How does your total social media following compare to your local population?",
+        questionDescription: "This compares your club's combined social media following against the size of your local catchment area. A club whose digital audience far exceeds its local population has an effective reach beyond its physical geography — this influences how much potential ceiling your club can realistically achieve.",
+        type: "radio-cards",
+        options: [
+          { value: "much_smaller", label: "Much smaller", description: "Followers < 25% of local population", tooltip: "Your club's social media following is less than a quarter of the local population. This is common for grassroots clubs or clubs in larger cities where digital presence hasn't yet scaled to match the local market size." },
+          { value: "roughly_comparable", label: "Roughly comparable", description: "Followers 25–100% of local population", tooltip: "Your club's social following roughly matches your local population size. This is a healthy baseline — your digital presence is tracking your physical catchment." },
+          { value: "moderately_larger", label: "Moderately larger", description: "Followers 2–10× local population", tooltip: "Your digital audience meaningfully exceeds your local population. This suggests your club is starting to attract fans beyond its immediate geography — a sign of growing brand reach." },
+          { value: "significantly_larger", label: "Significantly larger", description: "Followers 10–50× local population", tooltip: "Your club has built a digital brand that extends well beyond the local market. E.g. a small-town club with 300K followers in a 20K town, or a club with a strong diaspora following online." },
+          { value: "massively_larger", label: "Massively larger", description: "Followers 50×+ local population", tooltip: "Your digital footprint dwarfs your local geography. This is rare and typically indicates a club with national or international digital brand recognition disproportionate to its physical base — e.g. a lower-league club with a viral social media presence." },
+        ],
+      },
+      {
+        id: "marketCompetition",
+        label: "How many other professional or semi-professional clubs in your sport compete for the same local audience?",
+        questionDescription: "A club sharing its city with 5 other professional teams has a very different addressable fan base than the sole club in town. This question captures competitive density — how many other clubs at a similar or higher level are competing for the same supporters, sponsors, and media attention in your area.",
+        type: "radio-cards",
+        options: [
+          { value: "sole_club", label: "Only club", description: "We are the only club of our level in the area", tooltip: "Your club has a local monopoly at your competitive level. The entire catchment population is your addressable audience without direct local competition for attention and spend." },
+          { value: "1_2_clubs", label: "1–2 others", description: "1–2 other clubs at similar level", tooltip: "Moderate local competition. You share the market with a small number of peers — there is some audience fragmentation but you can still capture a large share of local sports interest." },
+          { value: "3_5_clubs", label: "3–5 others", description: "3–5 other clubs at similar or higher level", tooltip: "A crowded local market. Your effective catchment is a fraction of the total population because multiple clubs compete for the same fans, sponsors, and media coverage." },
+          { value: "6_plus_clubs", label: "6+ others", description: "Major metropolitan multi-club market", tooltip: "A hypercompetitive market like London, Istanbul, or Buenos Aires, where many clubs at similar or higher levels compete intensely for the same audience. Your addressable share of the local population is significantly diluted." },
+        ],
+      },
+      {
+        id: "sportMarketFit",
+        label: "How popular is your sport in your country/region?",
+        questionDescription: "A football club in Brazil and a lacrosse club in Brazil operate in the same city but face fundamentally different addressable audiences. This question captures sport-market fit — how much of the general population is a realistic potential audience for your sport, independent of your club's own performance.",
+        type: "radio-cards",
+        options: [
+          { value: "dominant", label: "Dominant sport", description: "E.g. football in England, cricket in India", tooltip: "Your sport is the #1 sport in your country by participation, viewership, and cultural importance. The vast majority of the population is a realistic potential audience." },
+          { value: "major", label: "Major sport", description: "Top 3 in the country but not dominant", tooltip: "Your sport is one of the top 3 sports in your country with strong mainstream interest and media coverage, but it is not the single dominant sport." },
+          { value: "moderate", label: "Moderate sport", description: "Established but not mainstream", tooltip: "Your sport has an established presence and organized competitions but is not considered mainstream. It may have regional pockets of strength. E.g. handball in France, volleyball in Italy." },
+          { value: "niche", label: "Niche sport", description: "Limited mainstream awareness", tooltip: "Your sport has limited mainstream awareness in your country. The potential audience is a specialist or enthusiast segment rather than the general population. E.g. cricket in Germany, lacrosse in Spain." },
+        ],
+      },
+      // ─── end v2.4 Virtual Catchment questions ──────────────────────────
       {
         id: "internationalReach",
         label: "Does your club have a significant national or international following?",

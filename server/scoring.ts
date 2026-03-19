@@ -426,15 +426,56 @@ function getCatchmentSize(catchment: string): number {
   }
 }
 
+// ─── VIRTUAL CATCHMENT MULTIPLIER LOOKUP TABLES (v2.4) ─────────────────────
+// Each new profile signal maps answer values to a multiplier applied to baseFactor.
+
+const DIGITAL_REACH_RATIO: Record<string, number> = {
+  "much_smaller":       0.90,  // followers < 25% of catchment population
+  "roughly_comparable": 1.00,  // followers 25-100% of local population (neutral)
+  "moderately_larger":  1.10,  // followers 2-10× local population
+  "significantly_larger":1.20, // followers 10-50× local population
+  "massively_larger":   1.30,  // followers 50×+ local population
+};
+
+const MARKET_COMPETITION: Record<string, number> = {
+  "sole_club":   1.15,  // only club of this level in the area
+  "1_2_clubs":   1.00,  // 1-2 other clubs (neutral)
+  "3_5_clubs":   0.90,  // 3-5 other clubs
+  "6_plus_clubs": 0.80, // 6+ clubs — hypercompetitive market
+};
+
+const SPORT_MARKET_FIT: Record<string, number> = {
+  "dominant": 1.10,  // #1 sport in the country
+  "major":    1.00,  // top 3 but not dominant (neutral)
+  "moderate": 0.90,  // established but not mainstream
+  "niche":    0.80,  // limited mainstream awareness
+};
+
 // Catchment multiplier on potential ceiling for catchment-sensitive dimensions (Fan, Commercial, Media)
-// This scales the addressable ceiling based on local population, but its influence
-// decreases as tier increases (higher tiers have national/international reach)
-function getCatchmentMultiplier(catchment: string, tier: number, internationalReach: string): number {
+// This scales the addressable ceiling based on local population + virtual catchment signals,
+// but its influence decreases as tier increases (higher tiers have national/international reach)
+function getCatchmentMultiplier(
+  catchment: string,
+  tier: number,
+  internationalReach: string,
+  digitalReachRatio?: string,
+  marketCompetition?: string,
+  sportMarketFit?: string,
+): number {
   const pop = getCatchmentSize(catchment);
 
   // Base catchment factor: 0.5 (tiny village) to 1.0 (major metro)
   // Logarithmic scale — doubling population doesn't double potential
   const baseFactor = Math.min(1.0, 0.4 + 0.1 * Math.log10(pop / 1000));
+
+  // ── v2.4: Virtual Catchment Adjustment ──
+  // Three profile-level signals modify the effective base factor.
+  // Each defaults to 1.0 (neutral) when not provided → full backward compat.
+  const drr = DIGITAL_REACH_RATIO[digitalReachRatio ?? ""] ?? 1.0;
+  const mc  = MARKET_COMPETITION[marketCompetition ?? ""] ?? 1.0;
+  const smf = SPORT_MARKET_FIT[sportMarketFit ?? ""] ?? 1.0;
+  const virtualAdjustment = drr * mc * smf;
+  const effectiveBaseFactor = Math.min(1.0, baseFactor * virtualAdjustment);
 
   // How much does catchment matter at this tier?
   // T1: 90%, T2: 70%, T3: 50%, T4: 30%, T5: 10%
@@ -458,10 +499,10 @@ function getCatchmentMultiplier(catchment: string, tier: number, internationalRe
     // "local" or not answered = no bonus
   }
 
-  // Final multiplier: blend catchment factor with tier-based floor
-  // At T1: almost entirely driven by catchment (baseFactor)
+  // Final multiplier: blend effective catchment factor with tier-based floor
+  // At T1: almost entirely driven by catchment (effectiveBaseFactor)
   // At T5: almost entirely floor of 1.0 (catchment barely matters)
-  const multiplier = (baseFactor * weight) + (1.0 * (1 - weight));
+  const multiplier = (effectiveBaseFactor * weight) + (1.0 * (1 - weight));
 
   return Math.min(multiplier * reachBonus, 1.2); // cap at 1.2 to prevent inflated ceilings
 }
@@ -834,6 +875,10 @@ interface PotentialDriverContext {
   catchmentSensitive: boolean;
   catchmentMultiplier: number;
   catchmentPopulation: string;
+  // v2.4 virtual catchment signals
+  digitalReachRatio?: string;
+  marketCompetition?: string;
+  sportMarketFit?: string;
 }
 
 const TIER_CEILINGS: Record<number, { maxUplift: number; ceiling: number }> = {
@@ -888,7 +933,7 @@ function computePotentialDrivers(contexts: PotentialDriverContext[]): Record<str
       text: headroomText,
     });
 
-    // ── Row 3: Catchment area multiplier ──
+    // ── Row 3: Catchment area multiplier (v2.4: enriched with virtual catchment context) ──
     if (!ctx.catchmentSensitive) {
       entries.push({
         factor: "catchment",
@@ -897,17 +942,45 @@ function computePotentialDrivers(contexts: PotentialDriverContext[]): Record<str
         text: `${ctx.dimLabel} is not adjusted for catchment area — the ceiling is determined solely by tier and capability readiness.`,
       });
     } else {
+      // Determine which virtual catchment factors are active (non-neutral)
+      const drrVal = DIGITAL_REACH_RATIO[ctx.digitalReachRatio ?? ""] ?? 1.0;
+      const mcVal  = MARKET_COMPETITION[ctx.marketCompetition ?? ""] ?? 1.0;
+      const smfVal = SPORT_MARKET_FIT[ctx.sportMarketFit ?? ""] ?? 1.0;
+      const hasVirtualSignals = ctx.digitalReachRatio || ctx.marketCompetition || ctx.sportMarketFit;
+
+      // Build human-readable factor descriptions
+      const boostingFactorDescs: string[] = [];
+      const constrainingFactorDescs: string[] = [];
+      if (drrVal > 1.0) boostingFactorDescs.push("a strong digital reach beyond your local market");
+      if (drrVal < 1.0) constrainingFactorDescs.push("a digital presence that hasn't yet extended beyond the local base");
+      if (mcVal > 1.0) boostingFactorDescs.push("a monopoly position with no local competitors");
+      if (mcVal < 1.0) constrainingFactorDescs.push("a crowded competitive market");
+      if (smfVal > 1.0) boostingFactorDescs.push("dominant sport-market fit in your country");
+      if (smfVal < 1.0) constrainingFactorDescs.push("niche sport positioning");
+
       let catchSignal: PotentialDriverEntry["signal"];
       let catchText: string;
       if (ctx.catchmentMultiplier >= 1.05) {
         catchSignal = "boosting";
-        catchText = `Your ${ctx.catchmentPopulation} catchment area is your strongest structural advantage — a large local population base lifts your ceiling above the tier default, giving you more room to grow than most clubs at your level.`;
+        if (hasVirtualSignals) {
+          catchText = `Your effective catchment — combining your ${ctx.catchmentPopulation} local market${boostingFactorDescs.length > 0 ? ", " + boostingFactorDescs.join(", and ") : ""} — is your strongest structural advantage, lifting your ceiling above the tier default.`;
+        } else {
+          catchText = `Your ${ctx.catchmentPopulation} catchment area is your strongest structural advantage — a large local population base lifts your ceiling above the tier default, giving you more room to grow than most clubs at your level.`;
+        }
       } else if (ctx.catchmentMultiplier >= 0.95) {
         catchSignal = "neutral";
-        catchText = `Your catchment area is close to the tier baseline and has a neutral effect on your potential ceiling.`;
+        if (hasVirtualSignals) {
+          catchText = `Your effective catchment (physical market, digital reach, and competitive context combined) is close to the tier baseline.`;
+        } else {
+          catchText = `Your catchment area is close to the tier baseline and has a neutral effect on your potential ceiling.`;
+        }
       } else {
         catchSignal = "dragging";
-        catchText = `Your ${ctx.catchmentPopulation} catchment area constrains your potential ceiling in fan-sensitive dimensions — this reflects the structural reality of competing for supporters in a smaller market, not a failure of execution.`;
+        if (hasVirtualSignals && constrainingFactorDescs.length > 0) {
+          catchText = `Your effective catchment is constrained by ${constrainingFactorDescs.join(" and ")}, limiting your ceiling below what the raw population figure would suggest.`;
+        } else {
+          catchText = `Your ${ctx.catchmentPopulation} catchment area constrains your potential ceiling in fan-sensitive dimensions — this reflects the structural reality of competing for supporters in a smaller market, not a failure of execution.`;
+        }
       }
       entries.push({
         factor: "catchment",
@@ -979,7 +1052,12 @@ export function calculateScores(answers: Record<string, string>, revenue: string
   // Catchment context
   const catchment = answers.catchmentPopulation || "50K-150K"; // default mid-size if missing
   const internationalReach = answers.internationalReach || "local";
-  const catchMult = getCatchmentMultiplier(catchment, tier, internationalReach);
+
+  // v2.4 Virtual Catchment signals (default to undefined → neutral 1.0)
+  const digitalReachRatio = answers.digitalReachRatio;
+  const marketCompetition = answers.marketCompetition;
+  const sportMarketFit = answers.sportMarketFit;
+  const catchMult = getCatchmentMultiplier(catchment, tier, internationalReach, digitalReachRatio, marketCompetition, sportMarketFit);
 
   // Calculate per-dimension achieved scores (averages all answered questions)
   const fanAchieved = getDimensionAchieved("fan", answers, tier);
@@ -1065,6 +1143,10 @@ export function calculateScores(answers: Record<string, string>, revenue: string
       population: catchment,
       internationalReach,
       catchmentMultiplier: Math.round(catchMult * 100) / 100,
+      // v2.4 virtual catchment signals (included for transparency / results display)
+      digitalReachRatio: digitalReachRatio || null,
+      marketCompetition: marketCompetition || null,
+      sportMarketFit: sportMarketFit || null,
     },
     dimensions,
     overall: {
@@ -1078,11 +1160,11 @@ export function calculateScores(answers: Record<string, string>, revenue: string
     initiatives: getInitiatives(dimensions, tier),
     scoreDrivers: computeScoreDrivers(answers, tier),
     potentialDrivers: computePotentialDrivers([
-      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
-      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
-      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
-      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
-      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment },
+      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
+      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
+      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
+      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
+      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
     ]),
   };
 }

@@ -88,6 +88,10 @@ export interface ScasScores {
     population: string;
     internationalReach: string;
     catchmentMultiplier: number;
+    // v2.4 virtual catchment signals
+    digitalReachRatio: string | null;
+    marketCompetition: string | null;
+    sportMarketFit: string | null;
   };
   dimensions: {
     fan: DimensionScore;

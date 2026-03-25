@@ -3,11 +3,11 @@ import { Heart, TrendingUp, Users, Megaphone, Trophy, ArrowRight, Zap, Shield, C
 import { Button } from "@/components/ui/button";
 
 const dimensions = [
-  { icon: Heart, label: "Fan Attraction", desc: "How well you connect with and grow your supporter base", weight: "30%" },
-  { icon: TrendingUp, label: "Commercial", desc: "Sponsorship portfolio, revenue diversification, market capture", weight: "25%" },
-  { icon: Users, label: "Talent", desc: "Ability to attract, develop, and retain players and staff", weight: "15%" },
-  { icon: Megaphone, label: "Media & Cultural", desc: "Content reach, media visibility, and cultural relevance", weight: "15%" },
-  { icon: Trophy, label: "Competitive", desc: "On-field performance relative to resources invested", weight: "15%" },
+  { icon: Heart, label: "Fan Attraction", desc: "How well you connect with and grow your supporter base" },
+  { icon: TrendingUp, label: "Commercial", desc: "Sponsorship portfolio, revenue diversification, market capture" },
+  { icon: Users, label: "Talent", desc: "Ability to attract, develop, and retain players and staff" },
+  { icon: Megaphone, label: "Media & Cultural", desc: "Content reach, media visibility, and cultural relevance" },
+  { icon: Trophy, label: "Competitive", desc: "On-field performance relative to resources invested" },
 ];
 
 function ScasLogo() {
@@ -81,7 +81,7 @@ export default function Landing() {
                 </div>
                 <div>
                   <h2 className="font-display font-bold text-base">Full Assessment</h2>
-                  <span className="text-xs font-medium text-primary">Premium · from €19</span>
+                  <span className="text-xs font-medium text-primary">Premium · from €49</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
@@ -126,7 +126,6 @@ export default function Landing() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-display font-semibold text-sm">{dim.label}</span>
-                  <span className="text-xs text-muted-foreground">{dim.weight}</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{dim.desc}</p>
               </div>

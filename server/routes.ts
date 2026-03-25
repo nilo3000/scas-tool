@@ -67,8 +67,8 @@ export async function registerRoutes(
     }
   });
 
-  // Tier price lookup
-  const TIER_PRICES: Record<number, number> = { 1: 19, 2: 49, 3: 99, 4: 159, 5: 490 };
+  // Tier price lookup (v2.5 value-based pricing)
+  const TIER_PRICES: Record<number, number> = { 1: 49, 2: 99, 3: 199, 4: 790, 5: 1490 };
 
   // Get assessment by ID
   app.get("/api/assessments/:id", async (req, res) => {

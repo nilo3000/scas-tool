@@ -71,8 +71,8 @@ export const REVENUE_RANGES = [
 
 export const TIER_PRICING: Record<number, { price: number; tierLabel: string; revenueRange: string; questions: string }> = {
   1: { price: 49, tierLabel: "Grassroots", revenueRange: "Under €3M", questions: "~32" },
-  2: { price: 99, tierLabel: "Foundation", revenueRange: "€3M – €10M", questions: "~42" },
-  3: { price: 199, tierLabel: "Challenger", revenueRange: "€10M – €50M", questions: "~62" },
+  2: { price: 190, tierLabel: "Foundation", revenueRange: "€3M – €10M", questions: "~42" },
+  3: { price: 390, tierLabel: "Challenger", revenueRange: "€10M – €50M", questions: "~62" },
   4: { price: 790, tierLabel: "Contender", revenueRange: "€50M – €300M", questions: "~75" },
   5: { price: 1490, tierLabel: "Elite", revenueRange: "Over €300M", questions: "~83" },
 };

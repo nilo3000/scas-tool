@@ -123,6 +123,71 @@ export async function registerRoutes(
     }
   });
 
+  // Re-score an existing assessment with the latest scoring engine (v2.5+)
+  // This allows retroactive application of scoring fixes without requiring retake
+  app.post("/api/assessments/:id/rescore", async (req, res) => {
+    try {
+      const assessment = await storage.getAssessment(req.params.id);
+      if (!assessment) {
+        return res.status(404).json({ error: "Assessment not found" });
+      }
+
+      // Re-run answers through the current scoring engine
+      const answers = JSON.parse(assessment.answers);
+      const newScores = calculateScores(answers, assessment.annualRevenue);
+
+      // Update the stored scores
+      const updated = await storage.updateAssessmentScores(req.params.id, JSON.stringify(newScores));
+      if (!updated) {
+        return res.status(500).json({ error: "Failed to update scores" });
+      }
+
+      return res.json({
+        success: true,
+        id: assessment.id,
+        oldTier: assessment.tier,
+        newTier: newScores.tier,
+        scores: newScores,
+      });
+    } catch (err: any) {
+      console.error("Error re-scoring assessment:", err);
+      return res.status(500).json({ error: "Failed to re-score assessment" });
+    }
+  });
+
+  // Re-score ALL existing assessments (internal admin endpoint)
+  app.post("/api/admin/rescore-all", async (req, res) => {
+    try {
+      const allAssessments = await storage.getAllAssessments();
+      const results = [];
+
+      for (const assessment of allAssessments) {
+        try {
+          const answers = JSON.parse(assessment.answers);
+          const oldScores = JSON.parse(assessment.scores);
+          const newScores = calculateScores(answers, assessment.annualRevenue);
+          await storage.updateAssessmentScores(assessment.id, JSON.stringify(newScores));
+
+          results.push({
+            id: assessment.id,
+            clubName: assessment.clubName,
+            oldOverall: oldScores.overall?.achieved,
+            newOverall: newScores.overall?.achieved,
+            oldConversion: oldScores.overall?.conversionRate,
+            newConversion: newScores.overall?.conversionRate,
+          });
+        } catch (e: any) {
+          results.push({ id: assessment.id, clubName: assessment.clubName, error: e.message });
+        }
+      }
+
+      return res.json({ success: true, rescored: results.length, results });
+    } catch (err: any) {
+      console.error("Error in rescore-all:", err);
+      return res.status(500).json({ error: "Failed to rescore assessments" });
+    }
+  });
+
   // Create premium lead
   app.post("/api/premium-leads", async (req, res) => {
     try {

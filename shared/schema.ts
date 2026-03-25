@@ -138,7 +138,7 @@ export interface DimensionDrivers {
 
 // ─── Potential Drivers (ceiling transparency) ──────────────────────────────
 export interface PotentialDriverEntry {
-  factor: "tier" | "headroom" | "catchment" | "capability";
+  factor: "tier" | "headroom" | "catchment" | "capability" | "execution";
   label: string;
   signal: "boosting" | "neutral" | "dragging" | "info" | "na";
   text: string;

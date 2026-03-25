@@ -71,7 +71,7 @@ function DimensionBar({ dim, dimKey, unlocked, hideConversion, drivers, potentia
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <span className="font-display font-semibold text-sm">{meta.label}</span>
-            <span className="text-xs text-muted-foreground">{meta.weight}</span>
+            {meta.weight && <span className="text-xs text-muted-foreground">{meta.weight}</span>}
           </div>
         </div>
       </div>

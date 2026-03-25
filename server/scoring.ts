@@ -117,7 +117,8 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
     "Very low": 1.0, "Low": 2.0, "Moderate": 3.0, "Good": 4.0, "Excellent": 5.0,
   },
   volunteerCoachRatio: {
-    "All volunteer": 1.0, "Mostly volunteer": 2.0, "Mixed": 3.0, "Mostly qualified": 4.0, "Fully professional": 5.0,
+    // U2: Redesigned for grassroots reality — 100% volunteer is the norm at T1
+    "All volunteers": 1.0, "Mostly volunteers, 1-2 paid": 2.0, "Mix of paid and volunteer": 3.0, "Mostly paid, some volunteer": 4.0, "Fully professional staff": 5.0,
   },
   scoutingNetwork: {
     "None": 1.0, "Local only": 2.0, "Regional": 3.0, "National": 4.0, "International": 5.0,
@@ -346,8 +347,10 @@ const DIMENSION_QUESTIONS: Record<string, string[]> = {
   ],
   media: [
     "contentOutput", "mediaCoverage",
-    "dedicatedContentPerson", "localMediaPartnerships", "communityStorytellingEvents",
-    "websiteTraffic", "contentPlatforms",
+    "dedicatedContentPerson", "localMediaPartnerships",
+    "communityEventCount",          // U1: merged from communityStorytellingEvents — shared with Fan
+    "websiteTraffic",
+    "socialMediaActivePlatforms",    // U1: merged from contentPlatforms — shared with Fan
     "contentProductionCadence", "brandArchitecture", "estimatedMediaValue", "broadcastingReach",
     "documentaryPresence", "culturalTranscendence", "earnedMediaValue",
     // T5-exclusive
@@ -823,7 +826,7 @@ const QUESTION_LABELS: Record<string, string> = {
   academyPathway: "Academy Pathway",
   coachingCertifications: "Coaching Certifications",
   playerRetentionRate: "Player Retention Rate",
-  volunteerCoachRatio: "Volunteer Coach Ratio",
+  volunteerCoachRatio: "Coaching Workforce Composition",
   scoutingNetwork: "Scouting Network",
   staffDevelopmentBudget: "Staff Development Budget",
   academyToFirstTeam: "Academy to First Team Rate",

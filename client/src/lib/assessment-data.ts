@@ -70,11 +70,11 @@ export const REVENUE_RANGES = [
 ];
 
 export const TIER_PRICING: Record<number, { price: number; tierLabel: string; revenueRange: string; questions: string }> = {
-  1: { price: 19, tierLabel: "Grassroots", revenueRange: "Under $3M", questions: "~28" },
-  2: { price: 49, tierLabel: "Foundation", revenueRange: "$3M – $10M", questions: "~39" },
-  3: { price: 99, tierLabel: "Challenger", revenueRange: "$10M – $50M", questions: "~59" },
-  4: { price: 159, tierLabel: "Contender", revenueRange: "$50M – $300M", questions: "~72" },
-  5: { price: 490, tierLabel: "Elite", revenueRange: "Over $300M", questions: "~80" },
+  1: { price: 49, tierLabel: "Grassroots", revenueRange: "Under €3M", questions: "~28" },
+  2: { price: 99, tierLabel: "Foundation", revenueRange: "€3M – €10M", questions: "~39" },
+  3: { price: 199, tierLabel: "Challenger", revenueRange: "€10M – €50M", questions: "~59" },
+  4: { price: 790, tierLabel: "Contender", revenueRange: "€50M – €300M", questions: "~72" },
+  5: { price: 1490, tierLabel: "Elite", revenueRange: "Over €300M", questions: "~80" },
 };
 
 /** Derive numeric tier from the annualRevenue answer value */

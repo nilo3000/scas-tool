@@ -426,6 +426,44 @@ function getCatchmentSize(catchment: string): number {
   }
 }
 
+// ─── EXECUTION HEADROOM COMPUTATION (v2.5) ────────────────────────────────
+// For each dimension, compute how much room exists purely from improving answers
+// toward the top of their own scale — independent of structural constraints.
+// This ensures clubs always see actionable growth, even in structurally constrained markets.
+
+function getMaxScore(questionId: string, tier: number): number {
+  // Check tier-specific scores first for highest possible value
+  const tierMapping = TIER_ANSWER_SCORES[questionId];
+  if (tierMapping && tierMapping[tier]) {
+    return Math.max(...Object.values(tierMapping[tier]));
+  }
+  const mapping = ANSWER_SCORES[questionId];
+  if (!mapping) return 5.0;
+  return Math.max(...Object.values(mapping));
+}
+
+/**
+ * Compute execution headroom for a dimension: the gap between current answers
+ * and the best possible answers, scaled to a 0-1 range.
+ * Returns a value between 0.0 (all answers maxed) and 1.0 (all answers minimal).
+ */
+function getDimensionExecutionGap(dimKey: string, answers: Record<string, string>, tier: number): number {
+  const questionIds = DIMENSION_QUESTIONS[dimKey] || [];
+  let totalGap = 0;
+  let totalRange = 0;
+  for (const qId of questionIds) {
+    const answer = answers[qId];
+    if (answer && answer.trim() !== "") {
+      const current = getScore(qId, answer, tier);
+      const max = getMaxScore(qId, tier);
+      totalGap += (max - current);
+      totalRange += (max - 1.0); // range from floor (1.0) to max
+    }
+  }
+  if (totalRange === 0) return 0;
+  return totalGap / totalRange; // 0 = perfect, 1 = all at minimum
+}
+
 // ─── VIRTUAL CATCHMENT MULTIPLIER LOOKUP TABLES (v2.4) ─────────────────────
 // Each new profile signal maps answer values to a multiplier applied to baseFactor.
 
@@ -468,20 +506,22 @@ function getCatchmentMultiplier(
   // Logarithmic scale — doubling population doesn't double potential
   const baseFactor = Math.min(1.0, 0.4 + 0.1 * Math.log10(pop / 1000));
 
-  // ── v2.4: Virtual Catchment Adjustment ──
+  // ── v2.4/v2.5: Virtual Catchment Adjustment ──
   // Three profile-level signals modify the effective base factor.
   // Each defaults to 1.0 (neutral) when not provided → full backward compat.
+  // v2.5: Floor the compound multiplier at 0.70 to prevent triple-penalty stacking
   const drr = DIGITAL_REACH_RATIO[digitalReachRatio ?? ""] ?? 1.0;
   const mc  = MARKET_COMPETITION[marketCompetition ?? ""] ?? 1.0;
   const smf = SPORT_MARKET_FIT[sportMarketFit ?? ""] ?? 1.0;
-  const virtualAdjustment = drr * mc * smf;
+  const virtualAdjustment = Math.max(0.70, drr * mc * smf); // v2.5: floor at 0.70
   const effectiveBaseFactor = Math.min(1.0, baseFactor * virtualAdjustment);
 
   // How much does catchment matter at this tier?
-  // T1: 90%, T2: 70%, T3: 50%, T4: 30%, T5: 10%
+  // v2.5: Reduced T1 from 0.90→0.70, T2 from 0.70→0.55 to prevent over-constraining
+  // small clubs in tough markets. Higher tiers unchanged.
   const catchmentWeight: Record<number, number> = {
-    1: 0.90,
-    2: 0.70,
+    1: 0.70,
+    2: 0.55,
     3: 0.50,
     4: 0.30,
     5: 0.10,
@@ -514,10 +554,28 @@ interface PotentialParams {
   /** Only Fan, Commercial, Media are catchment-sensitive */
   catchmentSensitive: boolean;
   catchmentMultiplier: number;
+  /** v2.5: Execution gap ratio (0=perfect, 1=all answers at minimum) */
+  executionGap: number;
 }
 
+/**
+ * v2.5 Potential Calculation — Structural + Execution Uplift Model
+ *
+ * The potential is composed of two uplift components:
+ *
+ * 1. STRUCTURAL UPLIFT — bounded by tier ceiling × catchment multiplier.
+ *    This represents the maximum the market/tier structurally allows.
+ *
+ * 2. EXECUTION UPLIFT — always present when there's room to improve answers.
+ *    Even if the structural ceiling is reached, a club with low-scoring indicators
+ *    still has meaningful execution headroom. This is scaled by executionGap
+ *    (how far current answers are from their maximum on the 1-5 scale).
+ *
+ * The final potential is guaranteed to be at least achieved + minHeadroom,
+ * so conversion rate never exceeds ~95% and there's always a growth message.
+ */
 function calcPotential(params: PotentialParams): number {
-  const { achieved, tier, hasCapabilityBoost, catchmentSensitive, catchmentMultiplier } = params;
+  const { achieved, tier, hasCapabilityBoost, catchmentSensitive, catchmentMultiplier, executionGap } = params;
 
   const tierCeilings: Record<number, { maxUplift: number; ceiling: number }> = {
     1: { maxUplift: 1.2, ceiling: 3.5 },
@@ -528,19 +586,44 @@ function calcPotential(params: PotentialParams): number {
   };
 
   const config = tierCeilings[tier] || tierCeilings[3];
-  let uplift = config.maxUplift;
+
+  // ── Structural uplift (market-bounded) ──
+  let structuralUplift = config.maxUplift;
   if (hasCapabilityBoost) {
-    uplift += 0.2;
+    structuralUplift += 0.2;
   }
 
   let ceiling = config.ceiling;
   if (catchmentSensitive) {
-    // Adjust ceiling based on catchment — a T1 village club can't reach the same
-    // ceiling as a T1 city club, but the effect fades at higher tiers
     ceiling = ceiling * catchmentMultiplier;
   }
 
-  return Math.min(achieved + uplift, ceiling);
+  const structuralPotential = Math.min(achieved + structuralUplift, ceiling);
+
+  // ── Execution uplift (always present when answers can improve) ──
+  // Scale: executionGap ranges 0-1; max execution uplift is 0.8 for T1, decreasing for higher tiers
+  // This represents "how much better could you do if you improved on the things you control?"
+  const maxExecutionUplift: Record<number, number> = {
+    1: 0.8, 2: 0.6, 3: 0.5, 4: 0.4, 5: 0.3,
+  };
+  const executionUplift = (maxExecutionUplift[tier] ?? 0.5) * executionGap;
+
+  // ── Combined potential ──
+  // Take the higher of structural potential or achieved + execution uplift,
+  // but never exceed the absolute tier ceiling (unmodified by catchment)
+  const executionPotential = achieved + executionUplift;
+  const combinedPotential = Math.max(structuralPotential, executionPotential);
+
+  // ── Minimum headroom floor (v2.5 Fix #1) ──
+  // Potential must always be at least achieved + minHeadroom
+  // This prevents >100% conversion and ensures every club sees growth room
+  const minHeadroom: Record<number, number> = {
+    1: 0.3, 2: 0.25, 3: 0.2, 4: 0.15, 5: 0.1,
+  };
+  const floor = achieved + (minHeadroom[tier] ?? 0.2);
+
+  // Final potential: at least the floor, at most the absolute tier ceiling
+  return Math.min(Math.max(combinedPotential, floor), config.ceiling);
 }
 
 function getRatingBand(score: number): string {
@@ -879,6 +962,8 @@ interface PotentialDriverContext {
   digitalReachRatio?: string;
   marketCompetition?: string;
   sportMarketFit?: string;
+  // v2.5 execution gap
+  executionGap: number;
 }
 
 const TIER_CEILINGS: Record<number, { maxUplift: number; ceiling: number }> = {
@@ -1021,6 +1106,31 @@ function computePotentialDrivers(contexts: PotentialDriverContext[]): Record<str
       });
     }
 
+    // ── Row 5: Execution headroom (v2.5) ──
+    const execGapPct = Math.round(ctx.executionGap * 100);
+    if (execGapPct >= 40) {
+      entries.push({
+        factor: "execution",
+        label: "Execution headroom",
+        signal: "boosting",
+        text: `${execGapPct}% of execution potential remains untapped in this dimension — there is significant room to improve by upgrading the capabilities you directly control, regardless of structural constraints.`,
+      });
+    } else if (execGapPct >= 15) {
+      entries.push({
+        factor: "execution",
+        label: "Execution headroom",
+        signal: "neutral",
+        text: `${execGapPct}% of execution potential remains in this dimension — targeted improvements on your weakest indicators can still move the needle.`,
+      });
+    } else {
+      entries.push({
+        factor: "execution",
+        label: "Execution headroom",
+        signal: "na",
+        text: `You are performing near the top of your capability range in this dimension — only ${execGapPct}% of execution headroom remains. Focus shifts to sustaining this high performance.`,
+      });
+    }
+
     // ── Summary sentence ──
     const boostingFactors = entries.filter(e => e.signal === "boosting");
     const draggingFactors = entries.filter(e => e.signal === "dragging");
@@ -1077,9 +1187,16 @@ export function calculateScores(answers: Record<string, string>, revenue: string
   const mediaHasBoost = avgAllDims >= 3.5 || mediaAchieved >= 3.5;
   const competitiveHasBoost = avgAllDims >= 3.5 || competitiveAchieved >= 3.5;
 
+  // v2.5: Compute execution gaps per dimension
+  const fanExecGap = getDimensionExecutionGap("fan", answers, tier);
+  const commercialExecGap = getDimensionExecutionGap("commercial", answers, tier);
+  const talentExecGap = getDimensionExecutionGap("talent", answers, tier);
+  const mediaExecGap = getDimensionExecutionGap("media", answers, tier);
+  const competitiveExecGap = getDimensionExecutionGap("competitive", answers, tier);
+
   // Build dimension scores — Fan, Commercial, Media are catchment-sensitive;
   // Talent and Competitive are not (driven by budget/league structure)
-  const buildDim = (achieved: number, weight: number, hasBoost: boolean, catchmentSensitive: boolean): DimensionScore => {
+  const buildDim = (achieved: number, weight: number, hasBoost: boolean, catchmentSensitive: boolean, execGap: number): DimensionScore => {
     const a = Math.round(achieved * 10) / 10;
     const p = Math.round(calcPotential({
       achieved,
@@ -1087,6 +1204,7 @@ export function calculateScores(answers: Record<string, string>, revenue: string
       hasCapabilityBoost: hasBoost,
       catchmentSensitive,
       catchmentMultiplier: catchMult,
+      executionGap: execGap,
     }) * 10) / 10;
     return {
       achieved: a,
@@ -1098,11 +1216,11 @@ export function calculateScores(answers: Record<string, string>, revenue: string
   };
 
   const dimensions = {
-    fan: buildDim(fanAchieved, 0.30, fanHasBoost, true),
-    commercial: buildDim(commercialAchieved, 0.25, commercialHasBoost, true),
-    talent: buildDim(talentAchieved, 0.15, talentHasBoost, false),
-    media: buildDim(mediaAchieved, 0.15, mediaHasBoost, true),
-    competitive: buildDim(competitiveAchieved, 0.15, competitiveHasBoost, false),
+    fan: buildDim(fanAchieved, 0.30, fanHasBoost, true, fanExecGap),
+    commercial: buildDim(commercialAchieved, 0.25, commercialHasBoost, true, commercialExecGap),
+    talent: buildDim(talentAchieved, 0.15, talentHasBoost, false, talentExecGap),
+    media: buildDim(mediaAchieved, 0.15, mediaHasBoost, true, mediaExecGap),
+    competitive: buildDim(competitiveAchieved, 0.15, competitiveHasBoost, false, competitiveExecGap),
   };
 
   // Overall weighted scores
@@ -1160,11 +1278,11 @@ export function calculateScores(answers: Record<string, string>, revenue: string
     initiatives: getInitiatives(dimensions, tier),
     scoreDrivers: computeScoreDrivers(answers, tier),
     potentialDrivers: computePotentialDrivers([
-      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
-      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
-      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
-      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
-      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit },
+      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: fanExecGap },
+      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: commercialExecGap },
+      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: talentExecGap },
+      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: mediaExecGap },
+      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: competitiveExecGap },
     ]),
   };
 }

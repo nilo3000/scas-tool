@@ -381,8 +381,8 @@ export const STEPS: Step[] = [
       },
       {
         id: "communityEventCount",
-        label: "How many community events do you organize per year?",
-        questionDescription: "Community events — school visits, open training sessions, charity fundraisers, local festivals — are the most direct way a club builds goodwill, grows its fanbase organically, and fulfils its social licence to operate. The number of events per year signals how embedded the club is in local life beyond the competitive season.",
+        label: "How many community & media presence events do you organize per year?",
+        questionDescription: "Community presence events — school visits, open training sessions, charity fundraisers, local festivals, player appearances, charity matchdays — build organic fan loyalty AND generate media coverage. This question scores in both Fan Attraction and Media & Cultural Attraction, reflecting the dual impact of community engagement.",
         type: "radio-cards",
         minTier: 1,
         options: [
@@ -452,8 +452,8 @@ export const STEPS: Step[] = [
       },
       {
         id: "socialMediaActivePlatforms",
-        label: "How many social media platforms are you actively managing?",
-        questionDescription: "Being present on multiple social platforms increases the total audience a club can reach and reduces dependency on any single algorithm. This question measures how broad your club's active social media footprint is — 'active' means posting original content at least twice per week, not simply having a dormant profile.",
+        label: "How many platforms are you actively producing original content on?",
+        questionDescription: "Being present on multiple platforms with original content increases the total audience a club can reach, builds media credibility, and creates commercial inventory for sponsors. 'Active' means posting original content at least twice per week. This question scores in both Fan Attraction and Media & Cultural Attraction.",
         type: "radio-cards",
         minTier: 2,
         options: [
@@ -974,16 +974,16 @@ export const STEPS: Step[] = [
       },
       {
         id: "volunteerCoachRatio",
-        label: "Ratio of qualified to volunteer coaches",
-        questionDescription: "The ratio of professional or qualified coaches to volunteers reflects the overall standard of coaching delivery across the club. A higher proportion of qualified coaches typically correlates with better player development, improved retention of young talent, and a stronger reputation in the talent market.",
+        label: "What best describes your coaching workforce?",
+        questionDescription: "The composition of your coaching workforce — from all-volunteer to fully professional — reflects the overall standard of coaching delivery and the club's investment in player development. At grassroots level, being 100% volunteer-run is completely normal; the scoring is calibrated so that volunteer-led clubs are not penalised for their operational reality, but clubs investing in paid roles are recognized for building toward professional standards.",
         type: "radio-cards",
         minTier: 1,
         options: [
-          { value: "All volunteer", label: "All volunteer", tooltip: "Every coaching role is filled by an unpaid volunteer with no formal requirement for qualifications. E.g. a grassroots football club where all age-group teams are coached by parents or former players in their own time." },
-          { value: "Mostly volunteer", label: "Mostly volunteer", tooltip: "The majority of coaches are volunteers, with only one or two paid or professionally qualified roles. E.g. a cricket club where the first-team coach is employed part-time but all junior teams are volunteer-led." },
-          { value: "Mixed", label: "Mixed", tooltip: "Roughly equal numbers of professional/qualified coaches and volunteers. E.g. a basketball club that employs three full-time coaches and relies on five certified volunteers for age-group teams." },
-          { value: "Mostly qualified", label: "Mostly qualified", tooltip: "The majority of coaching positions are filled by paid, professionally qualified coaches. E.g. a professional handball club with a full-time coaching staff and a small number of volunteer assistants in junior sections." },
-          { value: "Fully professional", label: "Fully professional", tooltip: "All coaching positions are professional paid roles with formal qualifications. E.g. an elite ice hockey club with a fully contracted coaching and support staff across all academy age groups and the first team." },
+          { value: "All volunteers", label: "All volunteers (no paid coaching staff)", tooltip: "Every coaching role is filled by unpaid volunteers. This is the norm for grassroots clubs. E.g. a village football club where all age-group teams are coached by parents or former players in their own time, with no budget for paid coaching." },
+          { value: "Mostly volunteers, 1-2 paid", label: "Mostly volunteers, 1–2 paid roles", tooltip: "The club has taken the first step toward professional coaching by employing one or two paid roles, with the rest covered by volunteers. E.g. a cricket club where the first-team head coach is employed part-time but all junior teams are volunteer-led." },
+          { value: "Mix of paid and volunteer", label: "Mix of paid and volunteer", tooltip: "Roughly equal numbers of paid/qualified coaches and volunteers working together. E.g. a basketball club with three full-time coaches alongside five certified volunteer coaches running age-group teams." },
+          { value: "Mostly paid, some volunteer", label: "Mostly paid staff, some volunteer support", tooltip: "The majority of coaching positions are filled by paid, professionally qualified coaches, with volunteers in supporting roles. E.g. a professional handball club with a full-time coaching staff and a handful of volunteer assistants in junior sections." },
+          { value: "Fully professional staff", label: "Fully professional coaching staff", tooltip: "All coaching positions are professional paid roles with formal qualifications and contracts. E.g. an elite ice hockey club with a fully contracted coaching and support staff across all academy age groups and the first team." },
         ],
       },
       // === T2+ additions ===
@@ -1185,20 +1185,8 @@ export const STEPS: Step[] = [
           { value: "5+", label: "5+", tooltip: "An extensive media partnership portfolio covering every major local and regional outlet. E.g. a professional football club with comprehensive media partnerships that provide daily coverage across print, broadcast, online, and social media platforms." },
         ],
       },
-      {
-        id: "communityStorytellingEvents",
-        label: "Community presence events per year",
-        questionDescription: "Community presence events — player school visits, charity matchdays, open training sessions, community awards, local partnership activities — generate organic media coverage, build emotional connections beyond the traditional fanbase, and demonstrate the club's social value. The frequency of these events signals how embedded the club is in the life of its community.",
-        type: "radio-cards",
-        minTier: 1,
-        options: [
-          { value: "0", label: "0" },
-          { value: "1-3", label: "1 – 3" },
-          { value: "4-8", label: "4 – 8" },
-          { value: "9-15", label: "9 – 15" },
-          { value: "15+", label: "15+" },
-        ],
-      },
+      // U1: communityStorytellingEvents REMOVED — merged with communityEventCount (Fan)
+      // The single question now scores in both Fan and Media dimensions
       // === T2+ additions ===
       {
         id: "websiteTraffic",
@@ -1214,20 +1202,8 @@ export const STEPS: Step[] = [
           { value: "100K+", label: "100K+", tooltip: "A large digital audience with national or international reach. E.g. an elite football or basketball club whose website serves a global fanbase, media professionals, and commercial partners." },
         ],
       },
-      {
-        id: "contentPlatforms",
-        label: "Platforms with original content",
-        questionDescription: "The number of platforms on which a club produces original content determines the breadth of audience it can build and the commercial inventory it can offer sponsors. Each additional platform with consistent original content opens a new audience segment and a new channel for partner activation.",
-        type: "radio-cards",
-        minTier: 2,
-        options: [
-          { value: "1", label: "1", tooltip: "Single-platform content operation. E.g. a grassroots ice hockey club that only maintains a Facebook page with match result updates." },
-          { value: "2-3", label: "2 – 3", tooltip: "Content on two or three platforms — a common starting point for developing clubs. E.g. a cricket club producing written content on its website and match highlights on YouTube." },
-          { value: "4-5", label: "4 – 5", tooltip: "A multi-platform content operation reaching fans across several channels. E.g. a basketball club producing daily content across Instagram, YouTube, its website, and a newsletter, with occasional TikTok posts." },
-          { value: "6-7", label: "6 – 7", tooltip: "A broad platform footprint covering the major channels with tailored content for each. E.g. a professional handball club with a structured content strategy spanning Instagram, TikTok, YouTube, Facebook, its website, a podcast, and email." },
-          { value: "8+", label: "8+", tooltip: "A comprehensive multi-platform content operation at scale. E.g. an elite football club producing daily original content for Instagram, TikTok, YouTube, X, Facebook, Snapchat, WeChat, a podcast channel, a newsletter, and an OTT streaming platform." },
-        ],
-      },
+      // U1: contentPlatforms REMOVED — merged with socialMediaActivePlatforms (Fan)
+      // The single question now scores in both Fan and Media dimensions
       // === T3+ additions ===
       {
         id: "contentProductionCadence",

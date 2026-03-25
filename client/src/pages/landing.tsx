@@ -39,16 +39,17 @@ export default function Landing() {
         <div className="max-w-3xl">
           <p className="text-xs font-semibold text-primary tracking-wider uppercase mb-4">The Sports Disruption Institute</p>
           <h1 className="font-display font-bold text-2xl md:text-3xl leading-tight tracking-tight mb-5">
-            Your club has a ceiling.<br />Do you know where it is?
+            How attractive is your sports club?
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed mb-4 max-w-xl">
-            Most sports clubs capture less than 60% of their addressable commercial potential. 
-            The gap between where your club is and where it could be has a number. SCAS 360 finds it.
+            Measure your club's attraction potential across 5 key dimensions. 
+            Discover where you're strong, where you're leaving value on the table, 
+            and what to do about it.
           </p>
           <p className="text-sm text-muted-foreground/80 leading-relaxed mb-10 max-w-xl">
             One assessment. Five strategic dimensions. A score calibrated to your tier, your catchment, 
-            and your sport — not someone else's. Walk away with a clear picture of what's holding your 
-            club back and the highest-impact actions to fix it.
+            and your sport — not someone else's. And clear recommendations how you can close your gaps, 
+            to become more attractive, improve financials and boost sports performance.
           </p>
 
           {/* Two-path CTA cards */}

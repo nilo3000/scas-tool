@@ -144,6 +144,8 @@ export default function Assessment() {
     if (currentStep < totalSteps - 1) {
       setDirection("right");
       setCurrentStep(prev => prev + 1);
+      // Scroll to top so the user sees the first question of the new step
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       // Submit
       const submissionAnswers = { ...answers, _mode: mode };
@@ -164,6 +166,7 @@ export default function Assessment() {
     if (currentStep > 0) {
       setDirection("left");
       setCurrentStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 

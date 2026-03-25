@@ -70,11 +70,11 @@ export const REVENUE_RANGES = [
 ];
 
 export const TIER_PRICING: Record<number, { price: number; tierLabel: string; revenueRange: string; questions: string }> = {
-  1: { price: 49, tierLabel: "Grassroots", revenueRange: "Under €3M", questions: "~28" },
-  2: { price: 99, tierLabel: "Foundation", revenueRange: "€3M – €10M", questions: "~39" },
-  3: { price: 199, tierLabel: "Challenger", revenueRange: "€10M – €50M", questions: "~59" },
-  4: { price: 790, tierLabel: "Contender", revenueRange: "€50M – €300M", questions: "~72" },
-  5: { price: 1490, tierLabel: "Elite", revenueRange: "Over €300M", questions: "~80" },
+  1: { price: 49, tierLabel: "Grassroots", revenueRange: "Under €3M", questions: "~32" },
+  2: { price: 99, tierLabel: "Foundation", revenueRange: "€3M – €10M", questions: "~42" },
+  3: { price: 199, tierLabel: "Challenger", revenueRange: "€10M – €50M", questions: "~62" },
+  4: { price: 790, tierLabel: "Contender", revenueRange: "€50M – €300M", questions: "~75" },
+  5: { price: 1490, tierLabel: "Elite", revenueRange: "Over €300M", questions: "~83" },
 };
 
 /** Derive numeric tier from the annualRevenue answer value */
@@ -117,7 +117,7 @@ export const STEPS: Step[] = [
       {
         id: "annualRevenue",
         label: "Annual Revenue Range",
-        questionDescription: "Annual revenue is used to place your club in the correct tier and to benchmark commercial efficiency ratios such as revenue per fan, wage-to-revenue ratio, and sponsorship share. Select the range that best reflects your club's total income in the most recent completed season, including matchday, commercial, broadcast, and grant income.",
+        questionDescription: "Select the range that best reflects your club's total income in the most recent completed season. This determines your assessment tier and ensures every score is calibrated to clubs at your level.",
         type: "radio-cards",
         options: REVENUE_RANGES.map(r => ({
           value: r.value,

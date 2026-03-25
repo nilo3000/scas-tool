@@ -5,6 +5,7 @@ export interface IStorage {
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
   getAssessment(id: string): Promise<Assessment | undefined>;
   updateAssessmentLead(id: string, email: string, contactName: string, orgRole: string): Promise<Assessment | undefined>;
+  updateAssessmentScores(id: string, scores: string): Promise<Assessment | undefined>;
   getAllAssessments(): Promise<Assessment[]>;
   createPremiumLead(lead: { name: string; email: string; organization: string; role: string; selectedTier?: number }): Promise<PremiumLead>;
   getLatestPremiumLead(): Promise<PremiumLead | undefined>;
@@ -52,6 +53,14 @@ export class MemStorage implements IStorage {
     const assessment = this.assessments.get(id);
     if (!assessment) return undefined;
     const updated = { ...assessment, email, contactName, orgRole };
+    this.assessments.set(id, updated);
+    return updated;
+  }
+
+  async updateAssessmentScores(id: string, scores: string): Promise<Assessment | undefined> {
+    const assessment = this.assessments.get(id);
+    if (!assessment) return undefined;
+    const updated = { ...assessment, scores };
     this.assessments.set(id, updated);
     return updated;
   }

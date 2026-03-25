@@ -39,7 +39,7 @@ export default function Landing() {
         <div className="max-w-3xl">
           <p className="text-xs font-semibold text-primary tracking-wider uppercase mb-4">The Sports Disruption Institute</p>
           <h1 className="font-display font-bold text-2xl md:text-3xl leading-tight tracking-tight mb-5">
-            How attractive is your sports club?
+            Discover the true potential of your sports club
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed mb-4 max-w-xl">
             Measure your club's attraction potential across 5 key dimensions. 

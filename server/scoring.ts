@@ -601,10 +601,14 @@ function calcPotential(params: PotentialParams): number {
   const structuralPotential = Math.min(achieved + structuralUplift, ceiling);
 
   // ── Execution uplift (always present when answers can improve) ──
-  // Scale: executionGap ranges 0-1; max execution uplift is 0.8 for T1, decreasing for higher tiers
-  // This represents "how much better could you do if you improved on the things you control?"
+  // Scale: executionGap ranges 0-1; max execution uplift scales by tier.
+  // T1 gets the largest max (1.5) because grassroots clubs have the most room
+  // to improve on capabilities they control — and when 4 of 6 indicators are
+  // dragging, the headroom should be substantial, not cosmetic.
+  // The uplift is naturally bounded by the tier ceiling, so a club can never
+  // exceed 3.5 (T1) regardless of how large the raw execution uplift would be.
   const maxExecutionUplift: Record<number, number> = {
-    1: 0.8, 2: 0.6, 3: 0.5, 4: 0.4, 5: 0.3,
+    1: 1.5, 2: 1.2, 3: 0.8, 4: 0.6, 5: 0.4,
   };
   const executionUplift = (maxExecutionUplift[tier] ?? 0.5) * executionGap;
 

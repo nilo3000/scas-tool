@@ -36,6 +36,31 @@ export const SPORTS = [
   "Cricket", "Baseball", "American Football", "Tennis", "Volleyball", "Other"
 ];
 
+export const COUNTRIES = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+  "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
+  "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+  "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros",
+  "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "DR Congo", "Denmark",
+  "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea",
+  "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany",
+  "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica",
+  "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia",
+  "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia",
+  "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco",
+  "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand",
+  "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine",
+  "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia",
+  "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino", "Sao Tome and Principe",
+  "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
+  "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan",
+  "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste",
+  "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda",
+  "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+  "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe",
+];
+
 export const REVENUE_RANGES = [
   { value: "Under $3M", label: "Under $3M", tier: 1, tierLabel: "Grassroots" },
   { value: "$3M-$10M", label: "$3M – $10M", tier: 2, tierLabel: "Foundation" },
@@ -70,9 +95,10 @@ export const STEPS: Step[] = [
       {
         id: "clubName",
         label: "Club / Organization Name",
-        questionDescription: "Your club's official name is used to personalise your SCAS report and ensure your results are benchmarked correctly against clubs of similar standing. Enter the name as it appears in official competition registrations.",
+        questionDescription: "Your club's official name is used to personalise your SCAS report. In the free assessment, this field is optional — you can complete the assessment anonymously.",
         type: "text",
-        placeholder: "e.g., FC Rheinstrom",
+        placeholder: "e.g., FC Rheinstrom (optional in free tier)",
+        /** Club name is optional in free tier — see assessment.tsx canProceed logic */
       },
       {
         id: "sport",
@@ -85,8 +111,8 @@ export const STEPS: Step[] = [
         id: "country",
         label: "Country",
         questionDescription: "Your country of operation sets the economic, regulatory, and competitive context for your assessment. Revenue benchmarks, media market size, and talent pool depth all vary significantly between markets — a top club in Denmark operates in a very different environment from one in Brazil or South Korea.",
-        type: "text",
-        placeholder: "e.g., Germany",
+        type: "select",
+        options: COUNTRIES.map(c => ({ value: c, label: c })),
       },
       {
         id: "annualRevenue",
@@ -1523,9 +1549,9 @@ export const STEPS: Step[] = [
 ];
 
 export const DIMENSION_META: Record<string, { label: string; icon: string; weight: string; color: string }> = {
-  fan: { label: "Fan Attraction", icon: "Heart", weight: "30%", color: "hsl(177, 98%, 22%)" },
-  commercial: { label: "Commercial Attraction", icon: "TrendingUp", weight: "25%", color: "hsl(38, 92%, 50%)" },
-  talent: { label: "Talent Attraction", icon: "Users", weight: "15%", color: "hsl(262, 60%, 48%)" },
-  media: { label: "Media & Cultural", icon: "Megaphone", weight: "15%", color: "hsl(142, 70%, 35%)" },
-  competitive: { label: "Competitive Attraction", icon: "Trophy", weight: "15%", color: "hsl(0, 70%, 50%)" },
+  fan: { label: "Fan Attraction", icon: "Heart", weight: "", color: "hsl(177, 98%, 22%)" },
+  commercial: { label: "Commercial Attraction", icon: "TrendingUp", weight: "", color: "hsl(38, 92%, 50%)" },
+  talent: { label: "Talent Attraction", icon: "Users", weight: "", color: "hsl(262, 60%, 48%)" },
+  media: { label: "Media & Cultural", icon: "Megaphone", weight: "", color: "hsl(142, 70%, 35%)" },
+  competitive: { label: "Competitive Attraction", icon: "Trophy", weight: "", color: "hsl(0, 70%, 50%)" },
 };

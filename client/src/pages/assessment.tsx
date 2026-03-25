@@ -123,6 +123,8 @@ export default function Assessment() {
   const progress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
 
   const canProceed = visibleQuestions.every(q => {
+    // U5: Club name is optional in free tier — allow anonymous completion
+    if (q.id === "clubName" && mode === "free") return true;
     const val = answers[q.id];
     return val && val.trim() !== "";
   });
@@ -146,7 +148,7 @@ export default function Assessment() {
       // Submit
       const submissionAnswers = { ...answers, _mode: mode };
       const data: AssessmentSubmit = {
-        clubName: answers.clubName || "",
+        clubName: answers.clubName || (mode === "free" ? "Anonymous" : ""),
         sport: answers.sport || "",
         country: answers.country || "",
         league: answers.league,

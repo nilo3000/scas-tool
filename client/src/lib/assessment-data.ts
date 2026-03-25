@@ -139,20 +139,9 @@ export const STEPS: Step[] = [
           { value: "1M+", label: "Over 1M", description: "Major metro", tooltip: "Large metropolitan or national capital catchment. E.g. a top-flight club in a major city where multiple professional clubs compete for the same audience." },
         ],
       },
-      // ─── v2.4: Virtual Catchment Area questions ─────────────────────────
-      {
-        id: "digitalReachRatio",
-        label: "How does your total social media following compare to your local population?",
-        questionDescription: "This compares your club's combined social media following against the size of your local catchment area. A club whose digital audience far exceeds its local population has an effective reach beyond its physical geography — this influences how much potential ceiling your club can realistically achieve.",
-        type: "radio-cards",
-        options: [
-          { value: "much_smaller", label: "Much smaller", description: "Followers < 25% of local population", tooltip: "Your club's social media following is less than a quarter of the local population. This is common for grassroots clubs or clubs in larger cities where digital presence hasn't yet scaled to match the local market size." },
-          { value: "roughly_comparable", label: "Roughly comparable", description: "Followers 25–100% of local population", tooltip: "Your club's social following roughly matches your local population size. This is a healthy baseline — your digital presence is tracking your physical catchment." },
-          { value: "moderately_larger", label: "Moderately larger", description: "Followers 2–10× local population", tooltip: "Your digital audience meaningfully exceeds your local population. This suggests your club is starting to attract fans beyond its immediate geography — a sign of growing brand reach." },
-          { value: "significantly_larger", label: "Significantly larger", description: "Followers 10–50× local population", tooltip: "Your club has built a digital brand that extends well beyond the local market. E.g. a small-town club with 300K followers in a 20K town, or a club with a strong diaspora following online." },
-          { value: "massively_larger", label: "Massively larger", description: "Followers 50×+ local population", tooltip: "Your digital footprint dwarfs your local geography. This is rare and typically indicates a club with national or international digital brand recognition disproportionate to its physical base — e.g. a lower-league club with a viral social media presence." },
-        ],
-      },
+      // ─── v2.5: Virtual Catchment Area questions ─────────────────────────
+      // digitalReachRatio REMOVED — now auto-computed from socialFollowers + catchmentPopulation
+      // using log-scale normalization in the scoring engine (fairer across market sizes)
       {
         id: "marketCompetition",
         label: "How many other professional or semi-professional clubs in your sport compete for the same local audience?",

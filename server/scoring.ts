@@ -467,16 +467,47 @@ function getDimensionExecutionGap(dimKey: string, answers: Record<string, string
   return totalGap / totalRange; // 0 = perfect, 1 = all at minimum
 }
 
-// ─── VIRTUAL CATCHMENT MULTIPLIER LOOKUP TABLES (v2.4) ─────────────────────
-// Each new profile signal maps answer values to a multiplier applied to baseFactor.
+// ─── VIRTUAL CATCHMENT MULTIPLIER LOOKUP TABLES (v2.4/v2.5) ───────────────
 
-const DIGITAL_REACH_RATIO: Record<string, number> = {
-  "much_smaller":       0.90,  // followers < 25% of catchment population
-  "roughly_comparable": 1.00,  // followers 25-100% of local population (neutral)
-  "moderately_larger":  1.10,  // followers 2-10× local population
-  "significantly_larger":1.20, // followers 10-50× local population
-  "massively_larger":   1.30,  // followers 50×+ local population
-};
+// v2.5: Digital reach ratio is now AUTO-COMPUTED from socialFollowers + catchmentPopulation
+// using log-scale normalization. The manual question is removed.
+// Old lookup table preserved as comment for reference:
+// "much_smaller": 0.90, "roughly_comparable": 1.00, "moderately_larger": 1.10,
+// "significantly_larger": 1.20, "massively_larger": 1.30
+
+/** Map socialFollowers answer to a numeric midpoint estimate, by tier */
+function getFollowerMidpoint(answer: string, tier: number): number {
+  const tierMaps: Record<number, Record<string, number>> = {
+    1: { "<500": 250, "500-2K": 1250, "2K-10K": 6000, "10K-50K": 30000, "50K-200K": 125000, "200K+": 400000 },
+    2: { "<2K": 1000, "2K-10K": 6000, "10K-50K": 30000, "50K-200K": 125000, "200K-750K": 475000, "750K+": 1500000 },
+    3: { "<10K": 5000, "10K-50K": 30000, "50K-250K": 150000, "250K-750K": 500000, "750K-2M": 1375000, "2M+": 4000000 },
+    4: { "<100K": 50000, "100K-500K": 300000, "500K-2M": 1250000, "2M-10M": 6000000, "10M-50M": 30000000, "50M+": 100000000 },
+    5: { "<1M": 500000, "1M-5M": 3000000, "5M-20M": 12500000, "20M-80M": 50000000, "80M-250M": 165000000, "250M+": 500000000 },
+  };
+  // Flat fallback
+  const flat: Record<string, number> = { "<5K": 2500, "5K-25K": 15000, "25K-100K": 62500, "100K-500K": 300000, "500K-2M": 1250000, "2M+": 4000000 };
+  const map = tierMaps[tier] || flat;
+  return map[answer] ?? flat[answer] ?? 5000;
+}
+
+/**
+ * Auto-compute digital reach multiplier from follower count and catchment population.
+ * Uses log-scale normalization so that:
+ *   - ratio = 0.025 (followers << population) → 0.90
+ *   - ratio = 0.25  (reasonable match)        → 1.00
+ *   - ratio = 2.5   (2-3× overreach)          → 1.10
+ *   - ratio = 25    (strong digital brand)     → 1.20
+ *   - ratio = 250+  (viral / diaspora club)    → 1.30
+ * Clamped to [0.90, 1.30] — same range as old manual question.
+ */
+function computeDigitalReachMultiplier(followerAnswer: string, catchmentAnswer: string, tier: number): number {
+  const followers = getFollowerMidpoint(followerAnswer, tier);
+  const population = getCatchmentSize(catchmentAnswer);
+  if (population <= 0 || followers <= 0) return 1.0; // neutral if missing
+  const rawRatio = followers / population;
+  const multiplier = 1.0 + 0.1 * Math.log10(Math.max(rawRatio, 0.001) / 0.25);
+  return Math.max(0.90, Math.min(1.30, multiplier));
+}
 
 const MARKET_COMPETITION: Record<string, number> = {
   "sole_club":   1.15,  // only club of this level in the area
@@ -499,7 +530,7 @@ function getCatchmentMultiplier(
   catchment: string,
   tier: number,
   internationalReach: string,
-  digitalReachRatio?: string,
+  socialFollowersAnswer?: string,
   marketCompetition?: string,
   sportMarketFit?: string,
 ): number {
@@ -509,11 +540,14 @@ function getCatchmentMultiplier(
   // Logarithmic scale — doubling population doesn't double potential
   const baseFactor = Math.min(1.0, 0.4 + 0.1 * Math.log10(pop / 1000));
 
-  // ── v2.4/v2.5: Virtual Catchment Adjustment ──
-  // Three profile-level signals modify the effective base factor.
-  // Each defaults to 1.0 (neutral) when not provided → full backward compat.
-  // v2.5: Floor the compound multiplier at 0.70 to prevent triple-penalty stacking
-  const drr = DIGITAL_REACH_RATIO[digitalReachRatio ?? ""] ?? 1.0;
+  // ── v2.5: Virtual Catchment Adjustment ──
+  // Digital reach ratio is now AUTO-COMPUTED from socialFollowers + catchment
+  // using log-scale normalization (fairer across market sizes).
+  // Market competition and sport-market fit remain self-reported.
+  // Floor at 0.70 to prevent triple-penalty stacking.
+  const drr = socialFollowersAnswer
+    ? computeDigitalReachMultiplier(socialFollowersAnswer, catchment, tier)
+    : 1.0; // neutral if no follower data
   const mc  = MARKET_COMPETITION[marketCompetition ?? ""] ?? 1.0;
   const smf = SPORT_MARKET_FIT[sportMarketFit ?? ""] ?? 1.0;
   const virtualAdjustment = Math.max(0.70, drr * mc * smf); // v2.5: floor at 0.70
@@ -965,8 +999,8 @@ interface PotentialDriverContext {
   catchmentSensitive: boolean;
   catchmentMultiplier: number;
   catchmentPopulation: string;
-  // v2.4 virtual catchment signals
-  digitalReachRatio?: string;
+  // v2.5 virtual catchment signals
+  socialFollowersAnswer?: string;
   marketCompetition?: string;
   sportMarketFit?: string;
   // v2.5 execution gap
@@ -1035,10 +1069,13 @@ function computePotentialDrivers(contexts: PotentialDriverContext[]): Record<str
       });
     } else {
       // Determine which virtual catchment factors are active (non-neutral)
-      const drrVal = DIGITAL_REACH_RATIO[ctx.digitalReachRatio ?? ""] ?? 1.0;
+      // v2.5: digital reach is auto-computed from socialFollowers + catchment
+      const drrVal = ctx.socialFollowersAnswer
+        ? computeDigitalReachMultiplier(ctx.socialFollowersAnswer, ctx.catchmentPopulation, ctx.tier)
+        : 1.0;
       const mcVal  = MARKET_COMPETITION[ctx.marketCompetition ?? ""] ?? 1.0;
       const smfVal = SPORT_MARKET_FIT[ctx.sportMarketFit ?? ""] ?? 1.0;
-      const hasVirtualSignals = ctx.digitalReachRatio || ctx.marketCompetition || ctx.sportMarketFit;
+      const hasVirtualSignals = ctx.socialFollowersAnswer || ctx.marketCompetition || ctx.sportMarketFit;
 
       // Build human-readable factor descriptions
       const boostingFactorDescs: string[] = [];
@@ -1170,11 +1207,12 @@ export function calculateScores(answers: Record<string, string>, revenue: string
   const catchment = answers.catchmentPopulation || "50K-150K"; // default mid-size if missing
   const internationalReach = answers.internationalReach || "local";
 
-  // v2.4 Virtual Catchment signals (default to undefined → neutral 1.0)
-  const digitalReachRatio = answers.digitalReachRatio;
+  // v2.5 Virtual Catchment signals
+  // digitalReachRatio is now AUTO-COMPUTED from socialFollowers + catchmentPopulation
+  const socialFollowersAnswer = answers.socialFollowers;
   const marketCompetition = answers.marketCompetition;
   const sportMarketFit = answers.sportMarketFit;
-  const catchMult = getCatchmentMultiplier(catchment, tier, internationalReach, digitalReachRatio, marketCompetition, sportMarketFit);
+  const catchMult = getCatchmentMultiplier(catchment, tier, internationalReach, socialFollowersAnswer, marketCompetition, sportMarketFit);
 
   // Calculate per-dimension achieved scores (averages all answered questions)
   const fanAchieved = getDimensionAchieved("fan", answers, tier);
@@ -1269,7 +1307,7 @@ export function calculateScores(answers: Record<string, string>, revenue: string
       internationalReach,
       catchmentMultiplier: Math.round(catchMult * 100) / 100,
       // v2.4 virtual catchment signals (included for transparency / results display)
-      digitalReachRatio: digitalReachRatio || null,
+      digitalReachRatio: null, // v2.5: auto-computed, no longer stored as answer
       marketCompetition: marketCompetition || null,
       sportMarketFit: sportMarketFit || null,
     },
@@ -1285,11 +1323,11 @@ export function calculateScores(answers: Record<string, string>, revenue: string
     initiatives: getInitiatives(dimensions, tier),
     scoreDrivers: computeScoreDrivers(answers, tier),
     potentialDrivers: computePotentialDrivers([
-      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: fanExecGap },
-      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: commercialExecGap },
-      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: talentExecGap },
-      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: mediaExecGap },
-      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, digitalReachRatio, marketCompetition, sportMarketFit, executionGap: competitiveExecGap },
+      { dimKey: "fan", dimLabel: DIM_LABELS.fan, achieved: dimensions.fan.achieved, potential: dimensions.fan.potential, uplift: dimensions.fan.uplift, conversionRate: dimensions.fan.conversionRate, tier, tierLabel, hasCapabilityBoost: fanHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, socialFollowersAnswer, marketCompetition, sportMarketFit, executionGap: fanExecGap },
+      { dimKey: "commercial", dimLabel: DIM_LABELS.commercial, achieved: dimensions.commercial.achieved, potential: dimensions.commercial.potential, uplift: dimensions.commercial.uplift, conversionRate: dimensions.commercial.conversionRate, tier, tierLabel, hasCapabilityBoost: commercialHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, socialFollowersAnswer, marketCompetition, sportMarketFit, executionGap: commercialExecGap },
+      { dimKey: "talent", dimLabel: DIM_LABELS.talent, achieved: dimensions.talent.achieved, potential: dimensions.talent.potential, uplift: dimensions.talent.uplift, conversionRate: dimensions.talent.conversionRate, tier, tierLabel, hasCapabilityBoost: talentHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, socialFollowersAnswer, marketCompetition, sportMarketFit, executionGap: talentExecGap },
+      { dimKey: "media", dimLabel: DIM_LABELS.media, achieved: dimensions.media.achieved, potential: dimensions.media.potential, uplift: dimensions.media.uplift, conversionRate: dimensions.media.conversionRate, tier, tierLabel, hasCapabilityBoost: mediaHasBoost, catchmentSensitive: true, catchmentMultiplier: catchMult, catchmentPopulation: catchment, socialFollowersAnswer, marketCompetition, sportMarketFit, executionGap: mediaExecGap },
+      { dimKey: "competitive", dimLabel: DIM_LABELS.competitive, achieved: dimensions.competitive.achieved, potential: dimensions.competitive.potential, uplift: dimensions.competitive.uplift, conversionRate: dimensions.competitive.conversionRate, tier, tierLabel, hasCapabilityBoost: competitiveHasBoost, catchmentSensitive: false, catchmentMultiplier: catchMult, catchmentPopulation: catchment, socialFollowersAnswer, marketCompetition, sportMarketFit, executionGap: competitiveExecGap },
     ]),
   };
 }

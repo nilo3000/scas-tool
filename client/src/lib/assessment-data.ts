@@ -244,12 +244,28 @@ export const STEPS: Step[] = [
         },
       },
       {
+        id: "venueCapacity",
+        label: "What is your venue's total capacity?",
+        type: "radio-cards",
+        minTier: 1,
+        freeTier: true,
+        questionDescription: "Your venue's total seating or standing capacity sets the structural scale of your matchday operation. Combined with your attendance percentage, this tells us both how well you fill your venue and how large your matchday footprint actually is — which directly affects commercial potential, atmosphere, and media appeal.",
+        options: [
+          { value: "<500", label: "Under 500", description: "Small ground", tooltip: "A small facility typical of grassroots clubs. E.g. a local pitch with basic standing areas or a small indoor arena." },
+          { value: "500-2K", label: "500 – 2,000", description: "Community venue", tooltip: "A community-scale venue with some permanent seating. E.g. a local football ground or indoor sports hall with a seated stand." },
+          { value: "2K-5K", label: "2,000 – 5,000", description: "Mid-size ground", tooltip: "A mid-size venue capable of hosting competitive fixtures with a meaningful matchday atmosphere. E.g. a regional league stadium or large sports hall." },
+          { value: "5K-15K", label: "5,000 – 15,000", description: "Professional venue", tooltip: "A professional-grade venue with full infrastructure for matchday hospitality, media, and commercial activation. E.g. a second-division football stadium or a large basketball arena." },
+          { value: "15K-40K", label: "15,000 – 40,000", description: "Major stadium", tooltip: "A major stadium with significant commercial infrastructure. E.g. a top-flight football stadium or a large multi-sport arena." },
+          { value: "40K+", label: "40,000+", description: "Elite venue", tooltip: "A world-class venue with maximum commercial, broadcast, and hospitality capability. E.g. a national stadium, a Champions League-grade arena." },
+        ],
+      },
+      {
         id: "attendanceCapacity",
         label: "Average matchday attendance as % of venue capacity",
         type: "radio-cards",
         minTier: 1,
         freeTier: true,
-        questionDescription: "Percentage of available seats filled on a typical matchday. Different tiers have different expectations — 85%+ is outstanding for a grassroots club but average for an elite one.",
+        questionDescription: "Percentage of available seats filled on a typical matchday. This measures operational efficiency — how well you convert your venue's capacity into actual attendance. Combined with your venue size, it gives a complete picture of your matchday strength.",
         tierOptions: {
           1: [
             { value: "<30%", label: "Under 30%" },

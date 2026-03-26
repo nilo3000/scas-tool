@@ -369,16 +369,47 @@ export const STEPS: Step[] = [
       },
       {
         id: "fanDatabase",
-        label: "Do you have a system tracking known fans?",
-        questionDescription: "Knowing who your fans are is the foundation of every commercial and engagement strategy. This question measures whether your club has a reliable, usable record of fan contact details and preferences — without which personalisation, direct marketing, and fan retention programmes are impossible.",
+        label: "How does your club track and manage fan data?",
+        questionDescription: "Knowing who your fans are is the foundation of every commercial and engagement strategy. Modern fan data systems range from simple contact lists to AI-powered platforms that connect ticketing, app usage, loyalty programmes, and social data into a single view of each fan — enabling personalised experiences and smarter commercial decisions.",
         type: "radio-cards",
         minTier: 1,
-        options: [
-          { value: "No", label: "No", tooltip: "No systematic record of fan contact details exists. E.g. you rely entirely on social media audiences you don't own and have no direct way to contact fans between matchdays." },
-          { value: "Basic spreadsheet", label: "Basic spreadsheet", tooltip: "Fan contacts stored in a shared spreadsheet or email list. E.g. a handball club collecting emails at sign-up events but with no tagging, history, or automation capability." },
-          { value: "Dedicated CRM", label: "Dedicated CRM", tooltip: "A purpose-built customer relationship management system tracks fan contacts, preferences, and interactions. E.g. a rugby club using a sports CRM to log ticketing history and communication opt-ins." },
-          { value: "Advanced with segmentation", label: "Advanced CRM with segmentation", tooltip: "The CRM contains rich data and fans are grouped into meaningful segments for targeted communications. E.g. a basketball club that separates season ticket holders, single-game buyers, youth members, and lapsed fans into distinct journeys." },
-        ],
+        tierOptions: {
+          1: [
+            { value: "No", label: "No system", description: "No records of fan contacts", tooltip: "No systematic record of fan contact details exists. You rely entirely on social media audiences you don't own and have no direct way to contact fans between matchdays." },
+            { value: "Basic spreadsheet", label: "Spreadsheet or email list", description: "Basic contact records", tooltip: "Fan contacts stored in a shared spreadsheet, email list, or paper sign-up sheets. E.g. a handball club collecting emails at registration events but with no tagging, history, or automation." },
+            { value: "Simple CRM", label: "Simple CRM or membership system", description: "Structured contact management", tooltip: "A basic CRM, membership database, or club management tool tracks fan contacts and basic preferences. E.g. a cricket club using a sports club management app to log members and email opt-ins." },
+            { value: "Dedicated CRM", label: "Dedicated CRM with some integrations", description: "CRM connected to ticketing or email", tooltip: "A proper CRM that connects to at least one other system (e.g. ticketing or email marketing). You can see who bought tickets AND who opened emails. E.g. a football club where the CRM pulls in matchday ticket data." },
+            { value: "Advanced with segmentation", label: "CRM with segmentation and automation", description: "Targeted campaigns based on fan behaviour", tooltip: "Fans are grouped into segments (season ticket holders, casual attenders, lapsed, youth members) with automated communication journeys. E.g. a basketball club that automatically sends re-engagement emails to fans who haven't attended in 3 months." },
+          ],
+          2: [
+            { value: "No", label: "No system", description: "No records of fan contacts", tooltip: "No systematic fan data management exists." },
+            { value: "Basic spreadsheet", label: "Spreadsheet or email list", description: "Basic contact records", tooltip: "Fan contacts stored in spreadsheets or basic mailing lists with no automation." },
+            { value: "Dedicated CRM", label: "Dedicated CRM", description: "Purpose-built contact management", tooltip: "A purpose-built CRM tracks fan contacts, preferences, and interaction history. E.g. a rugby club using a sports CRM to log ticketing history and communication opt-ins." },
+            { value: "Advanced with segmentation", label: "CRM with segmentation and automation", description: "Targeted campaigns based on fan behaviour", tooltip: "The CRM contains rich data and fans are grouped into meaningful segments with automated journeys. E.g. separating season ticket holders, single-game buyers, youth members, and lapsed fans into distinct communication tracks." },
+            { value: "Integrated platform", label: "Integrated fan platform", description: "CRM + ticketing + email + app connected", tooltip: "Multiple systems (CRM, ticketing, email, possibly a club app) feed into a unified view of each fan. E.g. a club where buying a ticket, downloading the app, and engaging on social media all contribute to one fan profile." },
+          ],
+          3: [
+            { value: "No", label: "No centralized system", description: "Scattered or no fan data", tooltip: "Fan information is scattered across disconnected systems or does not exist digitally." },
+            { value: "Basic spreadsheet", label: "Basic CRM only", description: "Simple contact management", tooltip: "A single CRM holds fan contacts but with limited enrichment or integration to other systems." },
+            { value: "Advanced with segmentation", label: "CRM with segmentation", description: "Segmented fan journeys", tooltip: "A mature CRM with fan segments, automated communications, and behavioural triggers." },
+            { value: "Integrated platform", label: "Integrated fan data platform", description: "CRM + ticketing + app + loyalty connected", tooltip: "A Customer Data Platform (CDP) or integrated stack consolidates data from ticketing, merchandise, app, and loyalty into unified fan profiles. Enables personalised offers and predictive targeting." },
+            { value: "AI-powered platform", label: "AI-powered fan intelligence", description: "Predictive analytics and real-time personalisation", tooltip: "An advanced platform using machine learning to predict fan behaviour, recommend actions, and personalise experiences in real-time. E.g. AI-driven propensity scoring for upselling season tickets or predicting churn risk." },
+          ],
+          4: [
+            { value: "Basic spreadsheet", label: "Basic CRM only", description: "Underperforming for this tier", tooltip: "A basic CRM with limited integration — significantly below expectations for a contender club." },
+            { value: "Advanced with segmentation", label: "CRM with segmentation and automation", description: "Standard professional setup", tooltip: "A mature CRM with fan segments, automated journeys, and basic analytics." },
+            { value: "Integrated platform", label: "Integrated fan data platform (CDP)", description: "Unified fan view across all touchpoints", tooltip: "A CDP or integrated stack connecting CRM, ticketing, merchandise, app, loyalty, and social data into a single fan profile." },
+            { value: "AI-powered platform", label: "AI-powered fan intelligence platform", description: "Predictive and prescriptive analytics", tooltip: "Machine learning models predict fan behaviour (churn, upsell, attendance likelihood) and recommend next-best-actions for each fan segment." },
+            { value: "Real-time unified", label: "Real-time unified platform with recommendations", description: "Live personalisation across all channels", tooltip: "A fully integrated, real-time platform that connects all fan touchpoints and delivers personalised experiences instantly. E.g. a fan opening the app mid-game receives offers based on seat location, purchase history, and in-venue behaviour." },
+          ],
+          5: [
+            { value: "Advanced with segmentation", label: "CRM with segmentation only", description: "Below elite expectations", tooltip: "A segmented CRM without advanced integration — significantly below what an elite club should have." },
+            { value: "Integrated platform", label: "Integrated fan data platform (CDP)", description: "Standard elite setup", tooltip: "A CDP consolidating all fan data sources into unified profiles with segmentation and automated journeys." },
+            { value: "AI-powered platform", label: "AI-powered fan intelligence", description: "Predictive analytics and smart targeting", tooltip: "Machine learning models drive fan engagement decisions — churn prediction, dynamic pricing, personalised content recommendations, and propensity scoring." },
+            { value: "Real-time unified", label: "Real-time unified platform", description: "Live personalisation at scale", tooltip: "All fan touchpoints connected in real-time with instant personalisation. Ticketing, app, in-venue, broadcast, and digital all feed back into one live profile." },
+            { value: "AI ecosystem", label: "Full AI-powered fan ecosystem", description: "Autonomous, connected, and predictive", tooltip: "A best-in-class fan data ecosystem where AI orchestrates fan experiences across every channel — in-venue, digital, broadcast, merchandise, and partner activations — with autonomous decisioning, external data enrichment, and real-time revenue optimisation." },
+          ],
+        },
       },
       // === T1+ additions ===
       {

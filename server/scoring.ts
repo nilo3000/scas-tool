@@ -416,6 +416,46 @@ function getDimensionAchieved(dimKey: string, answers: Record<string, string>, t
   return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
+// Venue capacity to numeric midpoint
+function getVenueCapacityMidpoint(venue: string): number {
+  switch (venue) {
+    case "<500": return 250;
+    case "500-2K": return 1250;
+    case "2K-5K": return 3500;
+    case "5K-15K": return 10000;
+    case "15K-40K": return 27500;
+    case "40K+": return 60000;
+    default: return 1250; // default community venue if missing
+  }
+}
+
+/**
+ * Compute a venue scale bonus for the attendance score.
+ * A club at 70% of a 30,000-seat stadium has more commercial/fan value
+ * than a club at 70% of a 300-seat ground, even though the % is the same.
+ *
+ * The bonus is tier-relative: a T1 club with a 5K venue is exceptional,
+ * while a T4 club with 5K is below expectations.
+ *
+ * Returns a bonus in [0.0, 0.8] added to the attendance dimension score.
+ * Uses log-scale so the bonus grows slowly — doubling venue size doesn't
+ * double the bonus.
+ */
+function computeVenueScaleBonus(venueAnswer: string, tier: number): number {
+  const capacity = getVenueCapacityMidpoint(venueAnswer);
+  // Expected venue capacity by tier (midpoint of typical range)
+  const expectedCapacity: Record<number, number> = {
+    1: 500, 2: 2000, 3: 8000, 4: 25000, 5: 50000,
+  };
+  const expected = expectedCapacity[tier] ?? 2000;
+  // Ratio: how does actual venue compare to tier expectation?
+  const ratio = capacity / expected;
+  // Log-scale bonus: ratio=1 → 0.0 (neutral), ratio=5 → +0.35, ratio=10 → +0.5
+  // ratio=0.2 → -0.35 (penalty for undersized venue)
+  const bonus = 0.5 * Math.log10(Math.max(ratio, 0.1));
+  return Math.max(-0.4, Math.min(0.8, bonus));
+}
+
 // Catchment population to numeric midpoint (for scaling)
 function getCatchmentSize(catchment: string): number {
   switch (catchment) {
@@ -819,6 +859,7 @@ function getInitiatives(dimensions: ScasScores["dimensions"], tier: number): Ini
 const QUESTION_LABELS: Record<string, string> = {
   // Fan
   socialFollowers: "Total Social Media Followers",
+  venueCapacity: "Venue Capacity",
   attendanceCapacity: "Matchday Attendance vs Capacity",
   fanDatabase: "Fan Database Maturity",
   activeMembersCount: "Active Members Count",
@@ -1215,8 +1256,16 @@ export function calculateScores(answers: Record<string, string>, revenue: string
   const catchMult = getCatchmentMultiplier(catchment, tier, internationalReach, socialFollowersAnswer, marketCompetition, sportMarketFit);
 
   // Calculate per-dimension achieved scores (averages all answered questions)
-  const fanAchieved = getDimensionAchieved("fan", answers, tier);
-  const commercialAchieved = getDimensionAchieved("commercial", answers, tier);
+  // Venue scale bonus: modifies Fan and Commercial achieved scores
+  // based on absolute venue size relative to tier expectations
+  const venueAnswer = answers.venueCapacity;
+  const venueBonus = venueAnswer ? computeVenueScaleBonus(venueAnswer, tier) : 0;
+
+  const fanAchievedRaw = getDimensionAchieved("fan", answers, tier);
+  const commercialAchievedRaw = getDimensionAchieved("commercial", answers, tier);
+  // Apply venue bonus: clamp to [1.0, 5.0] range
+  const fanAchieved = Math.max(1.0, Math.min(5.0, fanAchievedRaw + venueBonus * 0.5));
+  const commercialAchieved = Math.max(1.0, Math.min(5.0, commercialAchievedRaw + venueBonus * 0.3));
   const talentAchieved = getDimensionAchieved("talent", answers, tier);
   const mediaAchieved = getDimensionAchieved("media", answers, tier);
   const competitiveAchieved = getDimensionAchieved("competitive", answers, tier);

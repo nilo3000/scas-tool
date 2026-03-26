@@ -22,7 +22,10 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
     "<100": 1.0, "100-500": 2.0, "500-2K": 3.0, "2K-5K": 4.0, "5K+": 5.0,
   },
   fanCommunicationFreq: {
-    "Never": 1.0, "Monthly": 2.0, "Bi-weekly": 3.0, "Weekly": 4.0, "Multiple per week": 5.0,
+    // Handles all tier-specific answer values
+    "Never": 1.0, "Occasionally": 2.0, "Monthly": 2.0, "Bi-weekly": 2.5,
+    "Weekly": 3.2, "Multiple per week": 4.0, "Daily": 4.5,
+    "Multiple daily": 4.8, "Real-time": 5.0, "Autonomous": 5.0,
   },
   communityEventCount: {
     "0-2": 1.2, "3-5": 2.2, "6-12": 3.2, "12-24": 4.2, "24+": 5.0,

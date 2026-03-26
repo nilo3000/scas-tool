@@ -172,6 +172,7 @@ export const STEPS: Step[] = [
         label: "How far does your club's following reach?",
         questionDescription: "The geographic spread of your fanbase determines your addressable audience for commercial partnerships, media opportunities, and talent recruitment. A club with fans beyond its local area has structurally more potential — but what counts as 'impressive reach' depends entirely on your tier.",
         type: "radio-cards",
+        showWhen: (answers) => !!answers.annualRevenue,
         tierOptions: {
           1: [
             { value: "local", label: "Just our neighborhood", description: "Immediate village or neighborhood", tooltip: "Fans are almost exclusively from the streets around the ground. E.g. a village cricket club where everyone knows each other by name." },
@@ -203,9 +204,10 @@ export const STEPS: Step[] = [
           ],
           5: [
             { value: "national", label: "Primarily domestic, limited international reach", description: "Underperforming for elite tier", tooltip: "An elite club that hasn't yet capitalized on its commercial potential internationally. Significant growth opportunity." },
-            { value: "continental", label: "Strong in home continent, emerging elsewhere", description: "Continent-dominant", tooltip: "A top brand in your home continent but only emerging recognition on other continents." },
-            { value: "multi_continental", label: "Established presence across 2 continents", description: "Two-continent brand", tooltip: "Strong fanbase and commercial activity across two continents. E.g. a European club with a large following in Asia or North America." },
-            { value: "global", label: "Global brand, active fans on 3+ continents", description: "Global brand", tooltip: "Globally recognized with active commercial operations, tours, and fanbases across 3 or more continents." },
+            { value: "international_few", label: "International following in a handful of countries", description: "Emerging international", tooltip: "Known and followed in a few countries beyond your home market — perhaps through player exports, diaspora communities, or broadcast deals in neighboring markets. E.g. a top Turkish club with fans in Germany and the Netherlands." },
+            { value: "continental", label: "Strong across home continent", description: "Continental brand", tooltip: "A top brand across your home continent with fans, sponsors, and media coverage in many countries on that continent. E.g. a strong Premier League, La Liga, or Serie A club recognized across all of Europe." },
+            { value: "multi_continental", label: "Established presence across 2 continents", description: "Two-continent brand", tooltip: "Strong fanbase and commercial activity across two continents. E.g. a European club with a large following in Asia or North America, or a cricket club with fans in the subcontinent and UK." },
+            { value: "global", label: "Global brand, active fans on 3+ continents", description: "Global brand", tooltip: "Globally recognized with active commercial operations, tours, and fanbases across 3 or more continents. E.g. Liverpool, Bayern Munich, the Golden State Warriors." },
             { value: "international", label: "Truly global — top-of-mind in most major markets", description: "Tier 1 global sports brand", tooltip: "One of the most recognized sports brands on earth. E.g. Real Madrid, Manchester United, NY Yankees, the All Blacks — brands known even by people who don't follow the sport." },
           ],
         },
@@ -277,6 +279,7 @@ export const STEPS: Step[] = [
         type: "radio-cards",
         minTier: 1,
         freeTier: true,
+        showWhen: (answers) => !!answers.annualRevenue,
         questionDescription: "Your venue's total seating or standing capacity sets the structural scale of your matchday operation. Combined with your attendance percentage, this tells us both how well you fill your venue and how large your matchday footprint actually is — which directly affects commercial potential, atmosphere, and media appeal.",
         tierOptions: {
           1: [

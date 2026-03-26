@@ -169,18 +169,46 @@ export const STEPS: Step[] = [
       // ─── end v2.4 Virtual Catchment questions ──────────────────────────
       {
         id: "internationalReach",
-        label: "Does your club have a significant national or international following?",
-        questionDescription: "Clubs at higher tiers often have fanbases that extend well beyond their home country, creating additional commercial, media, and talent opportunities. This question determines whether your SCAS assessment should include the international dimensions of fan engagement, commercial rights, and global talent branding — sections that are less relevant for clubs with a purely local following.",
+        label: "How far does your club's following reach?",
+        questionDescription: "The geographic spread of your fanbase determines your addressable audience for commercial partnerships, media opportunities, and talent recruitment. A club with fans beyond its local area has structurally more potential — but what counts as 'impressive reach' depends entirely on your tier.",
         type: "radio-cards",
-        showWhen: (answers) => {
-          const rev = answers.annualRevenue;
-          return rev === "$10M-$50M" || rev === "$50M-$300M" || rev === "Over $300M";
+        tierOptions: {
+          1: [
+            { value: "local", label: "Just our neighborhood", description: "Immediate village or neighborhood", tooltip: "Fans are almost exclusively from the streets around the ground. E.g. a village cricket club where everyone knows each other by name." },
+            { value: "town", label: "Across our town or city", description: "Known locally", tooltip: "The club is recognized across the town or city but not much beyond it. E.g. a local football club that draws fans from all parts of the town." },
+            { value: "district", label: "Neighboring towns / wider district", description: "District-level recognition", tooltip: "People in neighboring towns know your club and some travel to matches. E.g. a handball club that draws spectators from a 30km radius." },
+            { value: "regional", label: "Recognized across the region", description: "Multiple districts", tooltip: "Your club has a following across multiple districts or a significant portion of your state/province. E.g. a basketball club that people across the whole region identify with." },
+            { value: "national", label: "Known beyond our region", description: "Pockets of followers nationally", tooltip: "Exceptional for a grassroots club — your name is recognized in other parts of the country, perhaps through a strong social media presence, a famous alumni, or a unique story." },
+          ],
+          2: [
+            { value: "local", label: "Mostly our local town/city", description: "Local following only", tooltip: "Your fanbase is concentrated in your immediate area with little recognition beyond it." },
+            { value: "regional", label: "Known across the wider region", description: "Regional recognition", tooltip: "Your club is known throughout your region or state. People beyond your city recognize the name." },
+            { value: "multi_regional", label: "Multiple regions of the country", description: "Cross-regional following", tooltip: "Your club has fans or recognition in several regions of the country — perhaps through cup runs, player alumni, or strong media coverage." },
+            { value: "national", label: "Nationally known in our sport", description: "National profile in sport", tooltip: "Most people who follow your sport in the country know your club. You may be featured in national sports media regularly." },
+            { value: "international", label: "Some international awareness", description: "Bordering countries or diaspora", tooltip: "Your club has some following in neighboring countries or among diaspora communities. E.g. a Swiss club known in Germany and Austria." },
+          ],
+          3: [
+            { value: "local", label: "Primarily regional", description: "Limited to home region", tooltip: "Your following hasn't meaningfully extended beyond your home region." },
+            { value: "national_niche", label: "Nationally known within our sport", description: "Sport-specific national profile", tooltip: "People who follow your sport nationally know your club, but you're not a household name outside the sport." },
+            { value: "national", label: "Nationally known beyond our sport", description: "Broader national recognition", tooltip: "Your club is recognized by the general public nationally, not just within your sport's fanbase." },
+            { value: "international_few", label: "International following (2–5 countries)", description: "Emerging international presence", tooltip: "You have measurable fans, commercial activity, or media coverage in a handful of countries. E.g. a Turkish basketball club with fans in Germany, or a cricket club with diaspora following in 3 countries." },
+            { value: "international", label: "Established international following (5+ countries)", description: "Broad international presence", tooltip: "Active fans, merchandise sales, or commercial partnerships across 5 or more countries." },
+          ],
+          4: [
+            { value: "national", label: "Primarily national, limited international", description: "Domestic-focused", tooltip: "Strong national following but limited awareness or commercial activity beyond the country." },
+            { value: "international_emerging", label: "National + growing following in 2–3 countries", description: "Emerging international", tooltip: "A strong national base with growing fanbases in a few international markets, perhaps through player signings or broadcast deals." },
+            { value: "international_established", label: "Established following in 5–10 countries", description: "Established international", tooltip: "Active fans and commercial presence in 5-10 countries. E.g. a mid-tier European football club with jersey sales and broadcast deals across the continent." },
+            { value: "continental", label: "Strong multi-country presence, one continent", description: "Continental brand", tooltip: "A dominant brand across your home continent with fans, sponsors, and media coverage in many countries. E.g. a strong Premier League or Serie A club." },
+            { value: "international", label: "Active following across multiple continents", description: "Multi-continental reach", tooltip: "Your brand has meaningful presence on 2+ continents through tours, merchandise, broadcast deals, and digital following." },
+          ],
+          5: [
+            { value: "national", label: "Primarily domestic, limited international reach", description: "Underperforming for elite tier", tooltip: "An elite club that hasn't yet capitalized on its commercial potential internationally. Significant growth opportunity." },
+            { value: "continental", label: "Strong in home continent, emerging elsewhere", description: "Continent-dominant", tooltip: "A top brand in your home continent but only emerging recognition on other continents." },
+            { value: "multi_continental", label: "Established presence across 2 continents", description: "Two-continent brand", tooltip: "Strong fanbase and commercial activity across two continents. E.g. a European club with a large following in Asia or North America." },
+            { value: "global", label: "Global brand, active fans on 3+ continents", description: "Global brand", tooltip: "Globally recognized with active commercial operations, tours, and fanbases across 3 or more continents." },
+            { value: "international", label: "Truly global — top-of-mind in most major markets", description: "Tier 1 global sports brand", tooltip: "One of the most recognized sports brands on earth. E.g. Real Madrid, Manchester United, NY Yankees, the All Blacks — brands known even by people who don't follow the sport." },
+          ],
         },
-        options: [
-          { value: "local", label: "Mostly local/regional", description: "Fans are primarily from the immediate area", tooltip: "Your club's fanbase and commercial activity is predominantly local or regional. E.g. a T3 rugby club with strong local support but no meaningful international following." },
-          { value: "national", label: "National presence", description: "Significant following across the country", tooltip: "Your club has a measurable national following beyond your immediate catchment area but limited international presence." },
-          { value: "international", label: "International brand", description: "Meaningful international fanbase or diaspora following", tooltip: "Your club has a measurable following, commercial partnerships, or media audience outside your home country. E.g. a basketball club with replica shirt sales across three continents or a cricket club with a global diaspora audience." },
-        ],
       },
     ],
   },

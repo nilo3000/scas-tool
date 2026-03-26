@@ -44,6 +44,13 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
   matchdayExperience: {
     "Poor": 1.0, "Below average": 2.0, "Average": 3.0, "Good": 4.0, "Excellent": 5.0,
   },
+  ticketingModel: {
+    "free": 1.0, "donation": 1.8, "basic": 3.0, "tiered": 4.2, "dynamic": 5.0,
+  },
+  compTicketRate: {
+    // Lower comp rate = better commercial discipline (inverted)
+    "<5%": 5.0, "5-15%": 4.0, "15-30%": 3.0, "30-50%": 2.0, "50%+": 1.0,
+  },
   socialMediaActivePlatforms: {
     "1": 1.2, "2": 2.2, "3": 3.2, "4-5": 4.2, "6+": 5.0,
   },
@@ -372,6 +379,7 @@ const DIMENSION_QUESTIONS: Record<string, string[]> = {
   ],
   commercial: [
     "sponsorCount", "sponsorRevenueShare", "matchdayRevenueShare", "revenuePerAttendee",
+    "ticketingModel", "compTicketRate",
     "digitalMonetization",
     "averageSponsorDealLength", "merchandiseRevenue",
     "hospitalityRevenue", "sponsorActivation",
@@ -932,6 +940,8 @@ const QUESTION_LABELS: Record<string, string> = {
   eventMediaCoverage: "Event Media Coverage Rate",
   seasonTicketRenewal: "Season Ticket Renewal Rate",
   matchdayExperience: "Matchday Experience Quality",
+  ticketingModel: "Ticketing Model",
+  compTicketRate: "Complimentary Ticket Rate",
   socialMediaActivePlatforms: "Active Social Media Platforms",
   netPromoterScore: "Net Promoter Score",
   fanDatabaseCoveragePercent: "Fan Database Coverage %",

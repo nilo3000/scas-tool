@@ -62,8 +62,8 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
     "<10%": 1.5, "10-20%": 2.5, "20-35%": 3.3, "35-50%": 4.0, "50%+": 4.5,
   },
   matchdayRevenueShare: {
-    // Inverted: lower matchday dependency = higher commercial maturity
-    "80%+": 1.0, "60-80%": 2.0, "40-60%": 3.0, "20-40%": 4.0, "<20%": 5.0,
+    // Flat fallback; tier-specific overrides below
+    "80%+": 1.5, "60-80%": 2.5, "40-60%": 3.5, "20-40%": 4.5, "<20%": 5.0,
   },
   revenuePerAttendee: {
     // Flat fallback; tier-specific overrides below
@@ -322,12 +322,25 @@ const TIER_ANSWER_SCORES: Record<string, Record<number, Record<string, number>>>
     3: { "Don't measure": 1.5, "<20": 2.0, "20-40": 3.0, "40-60": 4.0, "60+": 5.0 },
     // T4 and T5 use the flat mapping (Don't measure = 1.0)
   },
+  // matchdayRevenueShare: tier-specific because healthy dependency levels differ by tier
+  // T1 grassroots: 60-80% matchday is NORMAL (gate+bar is their main income)
+  // T5 elite: 60-80% matchday is DANGEROUSLY undiversified (should be 10-25%)
+  matchdayRevenueShare: {
+    1: { "80%+": 2.0, "60-80%": 3.0, "40-60%": 4.0, "20-40%": 4.5, "<20%": 5.0 },
+    2: { "80%+": 1.5, "60-80%": 2.5, "40-60%": 3.5, "20-40%": 4.5, "<20%": 5.0 },
+    3: { "80%+": 1.0, "60-80%": 2.0, "40-60%": 3.5, "20-40%": 4.5, "<20%": 5.0 },
+    4: { "80%+": 1.0, "60-80%": 1.5, "40-60%": 2.5, "20-40%": 4.0, "<20%": 5.0 },
+    5: { "80%+": 1.0, "60-80%": 1.2, "40-60%": 2.0, "20-40%": 3.5, "<20%": 5.0 },
+  },
+  // revenuePerAttendee: calibrated against real-world benchmarks
+  // BVB ~€42, Arsenal ~€109, PSG ~€147, NFL fans ~$150-250
+  // Grassroots clubs: €3-30 per head is realistic
   revenuePerAttendee: {
-    1: { "<5": 1.0, "5-15": 2.0, "15-30": 3.5, "30-50": 4.5, "50+": 5.0 },
-    2: { "<10": 1.0, "10-25": 2.0, "25-50": 3.2, "50-80": 4.2, "80+": 5.0 },
-    3: { "<20": 1.0, "20-50": 2.0, "50-100": 3.0, "100-200": 4.2, "200+": 5.0 },
-    4: { "<50": 1.0, "50-100": 1.8, "100-250": 3.0, "250-500": 4.2, "500+": 5.0 },
-    5: { "<100": 1.0, "100-250": 1.8, "250-500": 2.8, "500-1000": 4.0, "1000+": 5.0 },
+    1: { "<3": 1.0, "3-8": 2.0, "8-15": 3.5, "15-30": 4.5, "30+": 5.0 },
+    2: { "<5": 1.0, "5-15": 2.0, "15-30": 3.2, "30-60": 4.2, "60+": 5.0 },
+    3: { "<10": 1.0, "10-25": 2.0, "25-50": 3.2, "50-100": 4.2, "100+": 5.0 },
+    4: { "<15": 1.0, "15-40": 2.0, "40-80": 3.2, "80-150": 4.2, "150+": 5.0 },
+    5: { "<25": 1.0, "25-50": 2.0, "50-100": 3.2, "100-175": 4.2, "175+": 5.0 },
   },
 };
 

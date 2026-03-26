@@ -12,7 +12,10 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
     "<30%": 1.5, "30-50%": 2.5, "50-70%": 3.2, "70-85%": 4.0, "85%+": 4.8,
   },
   fanDatabase: {
-    "No": 1.0, "Basic spreadsheet": 2.0, "Dedicated CRM": 3.5, "Advanced with segmentation": 4.8,
+    // Handles all tier-specific answer values
+    "No": 1.0, "Basic spreadsheet": 1.8, "Simple CRM": 2.5, "Dedicated CRM": 3.2,
+    "Advanced with segmentation": 4.0, "Integrated platform": 4.5,
+    "AI-powered platform": 4.8, "Real-time unified": 5.0, "AI ecosystem": 5.0,
   },
   activeMembersCount: {
     "<100": 1.0, "100-500": 2.0, "500-2K": 3.0, "2K-5K": 4.0, "5K+": 5.0,

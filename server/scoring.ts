@@ -445,17 +445,21 @@ function getDimensionAchieved(dimKey: string, answers: Record<string, string>, t
   return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
-// Venue capacity to numeric midpoint
+// Venue capacity to numeric midpoint — handles all tier-specific answer values
 function getVenueCapacityMidpoint(venue: string): number {
-  switch (venue) {
-    case "<500": return 250;
-    case "500-2K": return 1250;
-    case "2K-5K": return 3500;
-    case "5K-15K": return 10000;
-    case "15K-40K": return 27500;
-    case "40K+": return 60000;
-    default: return 1250; // default community venue if missing
-  }
+  const map: Record<string, number> = {
+    // T1
+    "<200": 100, "200-500": 350, "500-1.5K": 1000, "1.5K-3K": 2250, "3K+": 4000,
+    // T2
+    "<500": 250, "500-2K": 1250, "2K-5K": 3500, "5K-10K": 7500, "10K+": 15000,
+    // T3
+    "<2K": 1000, "5K-15K": 10000, "15K-25K": 20000, "25K+": 35000,
+    // T4
+    "<5K": 2500, "15K-30K": 22500, "30K-50K": 40000, "50K+": 65000,
+    // T5
+    "<15K": 7500, "15K-40K": 27500, "40K-60K": 50000, "60K-80K": 70000, "80K+": 95000,
+  };
+  return map[venue] ?? 1250;
 }
 
 /**

@@ -28,7 +28,15 @@ const ANSWER_SCORES: Record<string, Record<string, number>> = {
     "Multiple daily": 4.8, "Real-time": 5.0, "Autonomous": 5.0,
   },
   communityEventCount: {
-    "0-2": 1.2, "3-5": 2.2, "6-12": 3.2, "12-24": 4.2, "24+": 5.0,
+    // Handles all tier-specific answer values — each tier's 6 options map ~linearly to 1.0-5.0
+    "0-2": 1.0, "3-5": 2.0, "6-12": 3.0, "12-24": 4.0, "24+": 5.0,
+    "3-8": 1.8, "8-18": 2.8, "18-30": 3.8, "30-50": 4.5, "50+": 5.0,
+    "0-5": 1.0, "6-15": 2.0, "15-30": 3.0, "50-80": 4.5, "80+": 5.0,
+    "0-10": 1.0, "10-30": 2.0, "30-60": 3.0, "60-100": 4.0, "100-150": 4.5, "150+": 5.0,
+    "0-20": 1.0, "20-50": 2.0, "50-100": 3.0, "100-200": 4.0, "200-400": 4.5, "400+": 5.0,
+  },
+  eventMediaCoverage: {
+    "none": 1.0, "under25": 2.0, "25-50": 3.2, "50-75": 4.2, "75plus": 5.0,
   },
   seasonTicketRenewal: {
     "<40%": 1.2, "40-60%": 2.2, "60-75%": 3.2, "75-85%": 4.0, "85%+": 4.8,
@@ -355,7 +363,7 @@ const TIER_ANSWER_SCORES: Record<string, Record<number, Record<string, number>>>
 const DIMENSION_QUESTIONS: Record<string, string[]> = {
   fan: [
     "socialFollowers", "attendanceCapacity", "fanDatabase",
-    "activeMembersCount", "fanCommunicationFreq", "communityEventCount",
+    "activeMembersCount", "fanCommunicationFreq", "communityEventCount", "eventMediaCoverage",
     "seasonTicketRenewal", "matchdayExperience", "socialMediaActivePlatforms",
     "netPromoterScore", "fanDatabaseCoveragePercent", "averageRevenuePerFan", "fanSegmentation",
     "fanLifetimeValue", "loyaltyProgram", "fanDataInfrastructure",
@@ -385,6 +393,7 @@ const DIMENSION_QUESTIONS: Record<string, string[]> = {
     "contentOutput", "mediaCoverage",
     "dedicatedContentPerson", "localMediaPartnerships",
     "communityEventCount",          // U1: merged from communityStorytellingEvents — shared with Fan
+    "eventMediaCoverage",            // Media coverage of community events
     "websiteTraffic",
     "socialMediaActivePlatforms",    // U1: merged from contentPlatforms — shared with Fan
     "contentProductionCadence", "brandArchitecture", "estimatedMediaValue", "broadcastingReach",
@@ -920,6 +929,7 @@ const QUESTION_LABELS: Record<string, string> = {
   activeMembersCount: "Active Members Count",
   fanCommunicationFreq: "Fan Communication Frequency",
   communityEventCount: "Community Events Per Year",
+  eventMediaCoverage: "Event Media Coverage Rate",
   seasonTicketRenewal: "Season Ticket Renewal Rate",
   matchdayExperience: "Matchday Experience Quality",
   socialMediaActivePlatforms: "Active Social Media Platforms",

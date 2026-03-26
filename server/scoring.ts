@@ -634,16 +634,31 @@ function getCatchmentMultiplier(
   };
   const weight = catchmentWeight[tier] ?? 0.50;
 
-  // Audience reach multiplier for T3+ (compensates for small catchment)
-  let reachBonus = 1.0;
-  if (tier >= 3) {
-    if (internationalReach === "international") {
-      reachBonus = 1.15; // International brand transcends city size
-    } else if (internationalReach === "national") {
-      reachBonus = 1.08; // National presence partially compensates
-    }
-    // "local" or not answered = no bonus
-  }
+  // Audience reach bonus: compensates for small catchment when club has
+  // a following that extends beyond its physical geography.
+  // Now uses granular tier-specific reach values (v2.5).
+  const reachBonusMap: Record<string, number> = {
+    // T1/T2 local values
+    "local": 1.0,
+    "town": 1.0,
+    "district": 1.02,
+    // Regional
+    "regional": 1.04,
+    "multi_regional": 1.06,
+    // National
+    "national_niche": 1.06,
+    "national": 1.08,
+    // International
+    "international_few": 1.10,
+    "international_emerging": 1.10,
+    "international_established": 1.12,
+    "international": 1.15,
+    // Continental / Global
+    "continental": 1.15,
+    "multi_continental": 1.18,
+    "global": 1.20,
+  };
+  const reachBonus = reachBonusMap[internationalReach] ?? 1.0;
 
   // Final multiplier: blend effective catchment factor with tier-based floor
   // At T1: almost entirely driven by catchment (effectiveBaseFactor)
